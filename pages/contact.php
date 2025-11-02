@@ -1,4 +1,5 @@
 <?php
+$pageTitle = "Contact Us";
 require_once '../config/constants.php';
 require_once '../includes/header.php';
 
@@ -6,8 +7,6 @@ require_once '../includes/header.php';
 require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
-
-$pageTitle = "Contact Us";
 
 // Handle form submission
 $success_message = '';

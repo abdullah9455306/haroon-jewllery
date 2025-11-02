@@ -1,4 +1,5 @@
 <?php
+$pageTitle = "Product Details";
 require_once '../config/constants.php';
 require_once '../includes/header.php';
 
@@ -6,8 +7,6 @@ require_once '../includes/header.php';
 require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
-
-$pageTitle = "Product Details";
 
 // Get product ID from URL
 $product_id = isset($_GET['id']) ? intval($_GET['id']) : 0;

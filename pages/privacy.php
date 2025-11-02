@@ -1,8 +1,8 @@
 <?php
+$pageTitle = "Privacy Policy";
 require_once '../config/constants.php';
 require_once '../includes/header.php';
 
-$pageTitle = "Privacy Policy";
 $effectiveDate = "05-09-2025";
 ?>
 
@@ -387,7 +387,7 @@ $effectiveDate = "05-09-2025";
             </div>
 
             <!-- Contact Information -->
-            <div class="card border-primary mb-4">
+            <!--<div class="card border-primary mb-4">
                 <div class="card-header bg-primary text-white">
                     <h4 class="mb-0"><i class="fas fa-question-circle me-2"></i>Questions About Our Privacy Policy?</h4>
                 </div>
@@ -408,7 +408,7 @@ $effectiveDate = "05-09-2025";
                         </div>
                     </div>
                 </div>
-            </div>
+            </div>-->
 
             <!-- Last Updated -->
             <div class="text-center text-muted">

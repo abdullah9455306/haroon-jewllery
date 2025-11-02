@@ -1,8 +1,7 @@
 <?php
+$pageTitle = "Shopping Cart";
 require_once '../config/constants.php';
 require_once '../includes/header.php';
-
-$pageTitle = "Shopping Cart";
 
 // Initialize $total to 0 to prevent undefined variable warnings
 $total = 0;

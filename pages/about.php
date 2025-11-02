@@ -1,8 +1,7 @@
 <?php
+$pageTitle = "About Us";
 require_once '../config/constants.php';
 require_once '../includes/header.php';
-
-$pageTitle = "About Us";
 ?>
 
 <div class="container-fluid py-5">

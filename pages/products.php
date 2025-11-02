@@ -1,4 +1,5 @@
 <?php
+$pageTitle = "Products";
 require_once '../config/constants.php';
 require_once '../includes/header.php';
 
@@ -6,8 +7,6 @@ require_once '../includes/header.php';
 require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
-
-$pageTitle = "Products";
 
 // Get search and filter parameters
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';

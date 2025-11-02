@@ -1,4 +1,5 @@
 <?php
+$pageTitle = "Register";
 require_once '../config/constants.php';
 require_once '../includes/header.php';
 

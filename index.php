@@ -78,7 +78,7 @@ if (empty($sliders)) {
                 <!-- Background Image -->
                 <div class="hero-bg-image">
                     <?php if($key === 0): ?>
-                        <!-- First Slider - Diamond Theme -->
+                    <!-- First Slider - Diamond Theme -->
                         <img src="<?php echo $slider_image; ?>"
                              alt="Diamond Collection Background"
                              class="hero-background">
