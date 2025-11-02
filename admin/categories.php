@@ -221,16 +221,67 @@ function handleCategoryImageUpload($file) {
     return null;
 }
 
-// Get all categories for dropdown
-$categories_stmt = $conn->query("
-    SELECT c.*, p.name as parent_name,
-           (SELECT COUNT(*) FROM products WHERE category_id = c.id) as product_count,
-           (SELECT COUNT(*) FROM categories WHERE parent_id = c.id) as subcategory_count
-    FROM categories c
-    LEFT JOIN categories p ON c.parent_id = p.id
-    ORDER BY c.parent_id IS NULL DESC, c.sort_order, c.name
-");
-$all_categories = $categories_stmt->fetchAll(PDO::FETCH_ASSOC);
+// Get filter parameters
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$status = isset($_GET['status']) ? $_GET['status'] : '';
+$parent_category = isset($_GET['parent_category']) ? $_GET['parent_category'] : '';
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$limit = 5; // Number of categories per page
+$offset = ($page - 1) * $limit;
+
+// Build WHERE conditions
+$whereConditions = ["1=1"];
+$params = [];
+$paramTypes = '';
+
+if (!empty($search)) {
+    $whereConditions[] = "(c.name LIKE ? OR c.slug LIKE ? OR c.description LIKE ?)";
+    $searchTerm = "%$search%";
+    $params[] = $searchTerm;
+    $params[] = $searchTerm;
+    $params[] = $searchTerm;
+    $paramTypes .= 'sss';
+}
+
+if (!empty($status) && $status !== 'all') {
+    $whereConditions[] = "c.status = ?";
+    $params[] = $status;
+    $paramTypes .= 's';
+}
+
+if (!empty($parent_category) && $parent_category !== 'all') {
+    if ($parent_category === 'main') {
+        $whereConditions[] = "c.parent_id IS NULL";
+    } elseif ($parent_category === 'sub') {
+        $whereConditions[] = "c.parent_id IS NOT NULL";
+    }
+}
+
+$whereClause = implode(' AND ', $whereConditions);
+
+// Get total count for pagination
+$countSql = "SELECT COUNT(DISTINCT c.id) as total
+             FROM categories c
+             LEFT JOIN categories p ON c.parent_id = p.id
+             WHERE $whereClause";
+$countStmt = $conn->prepare($countSql);
+$countStmt->execute($params);
+$totalCategories = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+$totalPages = ceil($totalCategories / $limit);
+
+// Get categories for display with pagination
+$sql = "SELECT c.*, p.name as parent_name,
+               (SELECT COUNT(*) FROM products WHERE category_id = c.id) as product_count,
+               (SELECT COUNT(*) FROM categories WHERE parent_id = c.id) as subcategory_count
+        FROM categories c
+        LEFT JOIN categories p ON c.parent_id = p.id
+        WHERE $whereClause
+        ORDER BY c.parent_id IS NULL DESC, c.sort_order, c.name
+        LIMIT $limit OFFSET $offset";
+
+$stmt = $conn->prepare($sql);
+$stmt->execute($params);
+$all_categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get categories for parent dropdown (excluding current category if editing)
 $parent_categories = $conn->query("
@@ -249,6 +300,13 @@ $stats_stmt = $conn->query("
     FROM categories
 ");
 $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
+
+// Get all categories for JavaScript data (for edit functionality)
+$all_categories_data = $conn->query("
+    SELECT id, name, slug, description, parent_id, image, sort_order, status
+    FROM categories
+    ORDER BY name
+")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!-- Main Content -->
@@ -316,6 +374,67 @@ $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
                     <small>Subcategories</small>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Filters Card -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" action="" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" name="search"
+                           value="<?php echo htmlspecialchars($search); ?>"
+                           placeholder="Name, slug or description...">
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="all">All Status</option>
+                        <option value="active" <?php echo $status === 'active' ? 'selected' : ''; ?>>Active</option>
+                        <option value="inactive" <?php echo $status === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="parent_category" class="form-label">Category Type</label>
+                    <select class="form-select" id="parent_category" name="parent_category">
+                        <option value="all">All Types</option>
+                        <option value="main" <?php echo $parent_category === 'main' ? 'selected' : ''; ?>>Main Categories</option>
+                        <option value="sub" <?php echo $parent_category === 'sub' ? 'selected' : ''; ?>>Subcategories</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-gold w-100">
+                        <i class="fas fa-filter"></i> Filter
+                    </button>
+                </div>
+            </form>
+
+            <!-- Active Filters -->
+            <?php if (!empty($search) || !empty($status) || !empty($parent_category)): ?>
+                <div class="mt-3">
+                    <small class="text-muted">Active filters:</small>
+                    <?php if (!empty($search)): ?>
+                        <span class="badge bg-primary me-2">
+                            Search: "<?php echo htmlspecialchars($search); ?>"
+                            <a href="?<?php echo http_build_query(array_merge($_GET, ['search' => ''])); ?>" class="text-white ms-1">×</a>
+                        </span>
+                    <?php endif; ?>
+                    <?php if (!empty($status) && $status !== 'all'): ?>
+                        <span class="badge bg-success me-2">
+                            Status: <?php echo ucfirst($status); ?>
+                            <a href="?<?php echo http_build_query(array_merge($_GET, ['status' => ''])); ?>" class="text-white ms-1">×</a>
+                        </span>
+                    <?php endif; ?>
+                    <?php if (!empty($parent_category) && $parent_category !== 'all'): ?>
+                        <span class="badge bg-info me-2">
+                            Type: <?php echo $parent_category === 'main' ? 'Main Categories' : 'Subcategories'; ?>
+                            <a href="?<?php echo http_build_query(array_merge($_GET, ['parent_category' => ''])); ?>" class="text-white ms-1">×</a>
+                        </span>
+                    <?php endif; ?>
+                    <a href="categories.php" class="btn btn-sm btn-outline-secondary">Clear All</a>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -396,7 +515,7 @@ $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
                                                     title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <a href="?action=toggle_status&id=<?php echo $category['id']; ?>"
+                                            <a href="?action=toggle_status&id=<?php echo $category['id']; ?><?php echo !empty($_GET) ? '&' . http_build_query($_GET) : ''; ?>"
                                                class="btn btn-<?php echo $category['status'] === 'active' ? 'danger' : 'success'; ?>"
                                                title="<?php echo $category['status'] === 'active' ? 'Deactivate' : 'Activate'; ?>">
                                                 <i class="fas fa-power-off"></i>
@@ -418,7 +537,13 @@ $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
                                 <td colspan="9" class="text-center py-5">
                                     <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
                                     <h5 class="text-muted">No categories found</h5>
-                                    <p class="text-muted mb-3">Get started by creating your first category</p>
+                                    <p class="text-muted mb-3">
+                                        <?php if (!empty($search) || !empty($status) || !empty($parent_category)): ?>
+                                            Try adjusting your search criteria
+                                        <?php else: ?>
+                                            Get started by creating your first category
+                                        <?php endif; ?>
+                                    </p>
                                     <button type="button" class="btn btn-gold" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
                                         <i class="fas fa-plus me-2"></i>Add New Category
                                     </button>
@@ -428,6 +553,48 @@ $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
                     </tbody>
                 </table>
             </div>
+
+            <!-- Pagination -->
+            <?php if ($totalPages > 1): ?>
+                <div class="p-3 border-top">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted">
+                                Showing <?php echo min($offset + 1, $totalCategories); ?>-<?php echo min($offset + count($all_categories), $totalCategories); ?> of <?php echo $totalCategories; ?> categories
+                            </span>
+                        </div>
+                        <nav aria-label="Categories pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                                    <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>">
+                                        <i class="fas fa-chevron-left me-1"></i>Previous
+                                    </a>
+                                </li>
+
+                                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                                    <?php if ($i == 1 || $i == $totalPages || ($i >= $page - 2 && $i <= $page + 2)): ?>
+                                        <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
+                                            <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>">
+                                                <?php echo $i; ?>
+                                            </a>
+                                        </li>
+                                    <?php elseif ($i == $page - 3 || $i == $page + 3): ?>
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    <?php endif; ?>
+                                <?php endfor; ?>
+
+                                <li class="page-item <?php echo $page >= $totalPages ? 'disabled' : ''; ?>">
+                                    <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>">
+                                        Next<i class="fas fa-chevron-right ms-1"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -443,6 +610,10 @@ $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
             <form method="POST" action="" enctype="multipart/form-data">
                 <div class="modal-body">
                     <input type="hidden" name="add_category" value="1">
+                    <!-- Preserve current filters and pagination -->
+                    <?php foreach ($_GET as $key => $value): ?>
+                        <input type="hidden" name="<?php echo htmlspecialchars($key); ?>" value="<?php echo htmlspecialchars($value); ?>">
+                    <?php endforeach; ?>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label for="name" class="form-label">Category Name <span class="text-danger">*</span></label>
@@ -505,6 +676,10 @@ $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
                 <div class="modal-body">
                     <input type="hidden" name="update_category" value="1">
                     <input type="hidden" name="category_id" id="edit_category_id">
+                    <!-- Preserve current filters and pagination -->
+                    <?php foreach ($_GET as $key => $value): ?>
+                        <input type="hidden" name="<?php echo htmlspecialchars($key); ?>" value="<?php echo htmlspecialchars($value); ?>">
+                    <?php endforeach; ?>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label for="edit_name" class="form-label">Category Name <span class="text-danger">*</span></label>
@@ -616,122 +791,13 @@ $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
 </style>
 
 <script>
-// Function to show Bootstrap alert
-function showBootstrapAlert(message, type = 'warning') {
-    // Remove any existing custom alerts first
-    const existingAlerts = document.querySelectorAll('.custom-bootstrap-alert');
-    existingAlerts.forEach(alert => alert.remove());
-
-    // Create alert element
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show custom-bootstrap-alert position-fixed`;
-    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-
-    alertDiv.innerHTML = `
-        <i class="fas fa-${type === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-
-    // Add to body
-    document.body.appendChild(alertDiv);
-
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-        if (alertDiv.parentNode) {
-            alertDiv.remove();
-        }
-    }, 5000);
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-generate slug from name
-    const nameInput = document.getElementById('name');
-    const slugInput = document.getElementById('slug');
-
-    if (nameInput && slugInput) {
-        nameInput.addEventListener('blur', function() {
-            if (!slugInput.value) {
-                const slug = this.value
-                    .toLowerCase()
-                    .trim()
-                    .replace(/[^a-z0-9 -]/g, '')
-                    .replace(/\s+/g, '-')
-                    .replace(/-+/g, '-');
-                slugInput.value = slug;
-            }
-        });
-    }
-
-    // Same for edit form
-    const editNameInput = document.getElementById('edit_name');
-    const editSlugInput = document.getElementById('edit_slug');
-
-    if (editNameInput && editSlugInput) {
-        editNameInput.addEventListener('blur', function() {
-            if (!editSlugInput.value) {
-                const slug = this.value
-                    .toLowerCase()
-                    .trim()
-                    .replace(/[^a-z0-9 -]/g, '')
-                    .replace(/\s+/g, '-')
-                    .replace(/-+/g, '-');
-                editSlugInput.value = slug;
-            }
-        });
-    }
-
-    // Handle delete category modal
-    const deleteCategoryModal = document.getElementById('deleteCategoryModal');
-    if (deleteCategoryModal) {
-        deleteCategoryModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const categoryId = button.getAttribute('data-category-id');
-            const categoryName = button.getAttribute('data-category-name');
-
-            const modalTitle = deleteCategoryModal.querySelector('.modal-title');
-            const categoryNameElement = deleteCategoryModal.querySelector('#deleteCategoryName');
-            const confirmDeleteBtn = deleteCategoryModal.querySelector('#confirmDeleteBtn');
-
-            categoryNameElement.textContent = categoryName;
-            confirmDeleteBtn.href = `?action=delete&id=${categoryId}`;
-        });
-    }
-
-    // Form validation
-    document.querySelectorAll('form').forEach(form => {
-        form.addEventListener('submit', function(e) {
-            const name = this.querySelector('[name="name"]');
-            const slug = this.querySelector('[name="slug"]');
-            let errorMessage = '';
-
-            if (name && !name.value.trim()) {
-                errorMessage = 'Category name is required';
-                name.focus();
-            } else if (slug && !slug.value.trim()) {
-                errorMessage = 'Category slug is required';
-                slug.focus();
-            } else if (slug && !/^[a-z0-9-]+$/.test(slug.value)) {
-                errorMessage = 'Slug can only contain lowercase letters, numbers, and hyphens';
-                slug.focus();
-            }
-
-            if (errorMessage) {
-                e.preventDefault();
-                showBootstrapAlert(errorMessage, 'danger');
-                return;
-            }
-        });
-    });
-});
+// Store categories data for JavaScript access
+const categoriesData = <?php echo json_encode($all_categories_data); ?>;
 
 // Load category data for editing
 function loadCategoryData(categoryId) {
-    // Get all categories data that was loaded in PHP
-    const categories = <?php echo json_encode($all_categories); ?>;
-
-    // Find the category with the matching ID
-    const category = categories.find(cat => cat.id == categoryId);
+    // Find the category in our pre-loaded data
+    const category = categoriesData.find(cat => cat.id == categoryId);
 
     if (category) {
         document.getElementById('edit_category_id').value = category.id;
@@ -742,21 +808,60 @@ function loadCategoryData(categoryId) {
         document.getElementById('edit_sort_order').value = category.sort_order;
         document.getElementById('edit_status').value = category.status;
 
-        // Show current image if exists
+        // Show current image
         const currentImageDiv = document.getElementById('current_image');
         if (category.image) {
             currentImageDiv.innerHTML = `
                 <small class="text-muted">Current Image:</small><br>
                 <img src="../${category.image}" alt="${category.name}"
-                     class="img-thumbnail mt-1" style="max-width: 100px; max-height: 100px;">
+                     style="max-width: 100px; height: auto;" class="mt-1 rounded">
             `;
         } else {
-            currentImageDiv.innerHTML = '<small class="text-muted">No image uploaded</small>';
+            currentImageDiv.innerHTML = '<small class="text-muted">No image</small>';
         }
     } else {
-        showBootstrapAlert('Error: Category not found', 'danger');
+        alert('Error: Category not found');
     }
 }
+
+// Delete category confirmation
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteButtons = document.querySelectorAll('.delete-category-btn');
+    const deleteCategoryName = document.getElementById('deleteCategoryName');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const categoryId = this.getAttribute('data-category-id');
+            const categoryName = this.getAttribute('data-category-name');
+
+            deleteCategoryName.textContent = categoryName;
+            confirmDeleteBtn.href = `?action=delete&id=${categoryId}<?php echo !empty($_GET) ? '&' . http_build_query($_GET) : ''; ?>`;
+        });
+    });
+});
+
+// Auto-generate slug from name (add form)
+document.getElementById('name').addEventListener('input', function() {
+    const name = this.value;
+    const slug = name.toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+    document.getElementById('slug').value = slug;
+});
+
+// Auto-generate slug for edit form
+document.getElementById('edit_name').addEventListener('input', function() {
+    const name = this.value;
+    const slug = name.toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+    document.getElementById('edit_slug').value = slug;
+});
 </script>
 
 <?php require_once 'includes/admin-footer.php'; ?>

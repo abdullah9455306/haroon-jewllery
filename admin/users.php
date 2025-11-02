@@ -120,7 +120,7 @@ $country = isset($_GET['country']) ? $_GET['country'] : '';
 $date_from = isset($_GET['date_from']) ? $_GET['date_from'] : '';
 $date_to = isset($_GET['date_to']) ? $_GET['date_to'] : '';
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-$limit = 15;
+$limit = 5;
 $offset = ($page - 1) * $limit;
 
 // Build WHERE conditions
@@ -632,6 +632,12 @@ if (isset($_GET['view_user_id'])) {
             <!-- Pagination -->
             <?php if ($totalPages > 1): ?>
                 <div class="p-3 border-top">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted">
+                            Showing <?php echo min($offset + 1, $totalUsers); ?>-<?php echo min($offset + count($users), $totalUsers); ?> of <?php echo $totalUsers; ?> customers
+                        </span>
+                    </div>
                     <nav aria-label="Users pagination">
                         <ul class="pagination justify-content-center mb-0">
                             <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
@@ -673,6 +679,7 @@ if (isset($_GET['view_user_id'])) {
                             </li>
                         </ul>
                     </nav>
+                   </div>
                 </div>
             <?php endif; ?>
         </div>

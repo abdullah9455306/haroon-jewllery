@@ -115,6 +115,19 @@ $pending_count = $conn->query("SELECT COUNT(*) FROM contact_messages WHERE statu
         .text-gold {
             color: var(--primary-color) !important;
         }
+
+        .active>.page-link, .page-link.active{
+            background-color: var(--primary-color) !important;
+            border: var(--primary-color) !important;
+        }
+
+        .page-link{
+            color: var(--dark-color) !important;
+        }
+
+        .active .page-link{
+             color: white !important;
+        }
     </style>
 </head>
 <body>

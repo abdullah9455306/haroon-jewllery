@@ -140,7 +140,7 @@ $status = isset($_GET['status']) ? $_GET['status'] : '';
 $featured = isset($_GET['featured']) ? $_GET['featured'] : '';
 $stock_status = isset($_GET['stock_status']) ? $_GET['stock_status'] : '';
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-$limit = 15;
+$limit = 5;
 $offset = ($page - 1) * $limit;
 
 // Build WHERE conditions
@@ -574,35 +574,42 @@ $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
             <!-- Pagination -->
             <?php if ($totalPages > 1): ?>
                 <div class="p-3 border-top">
-                    <nav aria-label="Products pagination">
-                        <ul class="pagination justify-content-center mb-0">
-                            <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
-                                <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>">
-                                    <i class="fas fa-chevron-left me-1"></i>Previous
-                                </a>
-                            </li>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted">
+                                Showing <?php echo min($offset + 1, $totalProducts); ?>-<?php echo min($offset + count($products), $totalProducts); ?> of <?php echo $totalProducts; ?> products
+                            </span>
+                        </div>
+                        <nav aria-label="Products pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                                    <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>">
+                                        <i class="fas fa-chevron-left me-1"></i>Previous
+                                    </a>
+                                </li>
 
-                            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                                <?php if ($i == 1 || $i == $totalPages || ($i >= $page - 2 && $i <= $page + 2)): ?>
-                                    <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                                        <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>">
-                                            <?php echo $i; ?>
-                                        </a>
-                                    </li>
-                                <?php elseif ($i == $page - 3 || $i == $page + 3): ?>
-                                    <li class="page-item disabled">
-                                        <span class="page-link">...</span>
-                                    </li>
-                                <?php endif; ?>
-                            <?php endfor; ?>
+                                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                                    <?php if ($i == 1 || $i == $totalPages || ($i >= $page - 2 && $i <= $page + 2)): ?>
+                                        <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
+                                            <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>">
+                                                <?php echo $i; ?>
+                                            </a>
+                                        </li>
+                                    <?php elseif ($i == $page - 3 || $i == $page + 3): ?>
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    <?php endif; ?>
+                                <?php endfor; ?>
 
-                            <li class="page-item <?php echo $page >= $totalPages ? 'disabled' : ''; ?>">
-                                <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>">
-                                    Next<i class="fas fa-chevron-right ms-1"></i>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
+                                <li class="page-item <?php echo $page >= $totalPages ? 'disabled' : ''; ?>">
+                                    <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>">
+                                        Next<i class="fas fa-chevron-right ms-1"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
                 </div>
             <?php endif; ?>
         </div>

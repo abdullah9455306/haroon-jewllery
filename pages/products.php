@@ -15,7 +15,7 @@ $min_price = isset($_GET['min_price']) ? floatval($_GET['min_price']) : 0;
 $max_price = isset($_GET['max_price']) ? floatval($_GET['max_price']) : 1000000;
 $sort = isset($_GET['sort']) ? $_GET['sort'] : 'newest';
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-$limit = 12;
+$limit = 8;
 $offset = ($page - 1) * $limit;
 
 // Build WHERE conditions
@@ -390,6 +390,12 @@ $priceRange = $conn->query("SELECT MIN(price) as min_price, MAX(price) as max_pr
 
                 <!-- Pagination -->
                 <?php if ($totalPages > 1): ?>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted">
+                            Showing <?php echo min($offset + 1, $totalProducts); ?>-<?php echo min($offset + count($products), $totalProducts); ?> of <?php echo $totalProducts; ?> products
+                        </span>
+                    </div>
                     <nav aria-label="Products pagination">
                         <ul class="pagination justify-content-center">
                             <!-- Previous Page -->
@@ -427,6 +433,7 @@ $priceRange = $conn->query("SELECT MIN(price) as min_price, MAX(price) as max_pr
                             </li>
                         </ul>
                     </nav>
+                </div>
                 <?php endif; ?>
 
             <?php else: ?>

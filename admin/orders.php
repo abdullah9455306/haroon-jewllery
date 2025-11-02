@@ -132,7 +132,7 @@ $payment_method = isset($_GET['payment_method']) ? $_GET['payment_method'] : '';
 $date_from = isset($_GET['date_from']) ? $_GET['date_from'] : '';
 $date_to = isset($_GET['date_to']) ? $_GET['date_to'] : '';
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-$limit = 15;
+$limit = 5;
 $offset = ($page - 1) * $limit;
 
 // Build WHERE conditions
