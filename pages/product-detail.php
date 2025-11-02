@@ -191,7 +191,7 @@ $main_image = !empty($product_images) ? $product_images[0]['image_path'] : ($pro
                     </div>
 
                     <!-- Add to Cart Section -->
-                    <?php if ($product['stock_quantity'] > 0): ?>
+                    <!--<?php if ($product['stock_quantity'] > 0): ?>
                         <div class="card bg-light border-0 mb-4">
                             <div class="card-body">
                                 <div class="row align-items-center">
@@ -211,9 +211,9 @@ $main_image = !empty($product_images) ? $product_images[0]['image_path'] : ($pro
                                                 data-product-image="<?php echo htmlspecialchars($main_image); ?>" style="margin-bottom: -30px;">
                                             <i class="fas fa-shopping-cart me-2"></i>Add to Cart
                                         </button>
-                                        <!--<button class="btn btn-outline-dark btn-lg w-100">
+                                        <button class="btn btn-outline-dark btn-lg w-100">
                                             <i class="fas fa-heart me-2"></i>Add to Wishlist
-                                        </button>-->
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -223,7 +223,7 @@ $main_image = !empty($product_images) ? $product_images[0]['image_path'] : ($pro
                             <i class="fas fa-exclamation-triangle me-2"></i>
                             This product is currently out of stock. Please check back later.
                         </div>
-                    <?php endif; ?>
+                    <?php endif; ?>-->
 
                     <!-- Product Features -->
                     <div class="row text-center mb-4">
@@ -426,13 +426,13 @@ $main_image = !empty($product_images) ? $product_images[0]['image_path'] : ($pro
                                             <a href="product-detail.php?id=<?php echo $related['id']; ?>" class="btn btn-gold btn-sm w-75 mb-2">
                                                 Quick View
                                             </a>
-                                            <button class="btn btn-outline-light btn-sm w-75 add-to-cart"
+                                            <!--<button class="btn btn-outline-light btn-sm w-75 add-to-cart"
                                                     data-product-id="<?php echo $related['id']; ?>"
                                                     data-product-name="<?php echo htmlspecialchars($related['name']); ?>"
                                                     data-product-price="<?php echo $related_final_price; ?>"
                                                     data-product-image="<?php echo htmlspecialchars($related_image); ?>">
                                                 Add to Cart
-                                            </button>
+                                            </button>-->
                                         </div>
                                     </div>
                                 </div>
