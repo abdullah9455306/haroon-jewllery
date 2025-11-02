@@ -1,0 +1,75 @@
+{
+    "timestamp": "2025-11-01 13:17:25",
+    "settings": [
+        {
+            "setting_key": "store_name",
+            "setting_value": "Haroon Jewellery",
+            "setting_type": "text"
+        },
+        {
+            "setting_key": "store_email",
+            "setting_value": "info@haroonjewellery.com",
+            "setting_type": "email"
+        },
+        {
+            "setting_key": "store_phone",
+            "setting_value": "+92 300 1234567",
+            "setting_type": "text"
+        },
+        {
+            "setting_key": "store_address",
+            "setting_value": "Main Boulevard, Lahore, Pakistan",
+            "setting_type": "textarea"
+        },
+        {
+            "setting_key": "jazzcash_merchant_id",
+            "setting_value": "MC408931",
+            "setting_type": "text"
+        },
+        {
+            "setting_key": "jazzcash_password",
+            "setting_value": "t15va48u3u",
+            "setting_type": "text"
+        },
+        {
+            "setting_key": "jazzcash_salt",
+            "setting_value": "40x15uy069",
+            "setting_type": "text"
+        },
+        {
+            "setting_key": "jazzcash_return_url",
+            "setting_value": "http:\/\/localhost:8080\/jazzcash-http-post\/jazzcash-http-post-part2\/order_placed.php",
+            "setting_type": "url"
+        },
+        {
+            "setting_key": "currency",
+            "setting_value": "PKR",
+            "setting_type": "text"
+        },
+        {
+            "setting_key": "shipping_cost",
+            "setting_value": "200",
+            "setting_type": "number"
+        },
+        {
+            "setting_key": "jazzcash_card_merchant_id",
+            "setting_value": "MC408931",
+            "setting_type": "text"
+        },
+        {
+            "setting_key": "jazzcash_card_password",
+            "setting_value": "t15va48u3u",
+            "setting_type": "text"
+        },
+        {
+            "setting_key": "jazzcash_card_salt",
+            "setting_value": "40x15uy069",
+            "setting_type": "text"
+        },
+        {
+            "setting_key": "default_theme",
+            "setting_value": "light",
+            "setting_type": "text"
+        }
+    ]
+}
