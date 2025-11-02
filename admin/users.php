@@ -785,7 +785,7 @@ if (isset($_GET['view_user_id'])) {
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <?php if ($user_details): ?>
                     <a href="?action=toggle_status&id=<?php echo $user_details['id']; ?>"
-                       class="btn btn-<?php echo $user_details['status'] === 'active' ? 'warning' : 'success'; ?>">
+                       class="btn btn-<?php echo $user_details['status'] === 'active' ? 'danger' : 'success'; ?>">
                         <?php echo $user_details['status'] === 'active' ? 'Deactivate' : 'Activate'; ?>
                     </a>
                     <a href="#"

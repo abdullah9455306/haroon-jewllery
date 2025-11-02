@@ -202,6 +202,7 @@ CREATE TABLE contact_messages (
     subject VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
     status ENUM('pending', 'read', 'replied') DEFAULT 'pending',
+    admin_notes TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

@@ -16,6 +16,12 @@ if(!isset($_SESSION['admin_theme'])) {
 if(isset($_POST['toggle_theme'])) {
     $_SESSION['admin_theme'] = $_SESSION['admin_theme'] === 'light' ? 'dark' : 'light';
 }
+
+// Get pending message count for badge
+require_once '../config/database.php';
+$db = new Database();
+$conn = $db->getConnection();
+$pending_count = $conn->query("SELECT COUNT(*) FROM contact_messages WHERE status = 'pending'")->fetchColumn();
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="<?php echo $_SESSION['admin_theme']; ?>">
@@ -146,6 +152,14 @@ if(isset($_POST['toggle_theme'])) {
                         <i class="fas fa-users me-2"></i>Users
                     </a>
 
+                    <!-- Contact Queries Menu Item -->
+                    <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'contact-queries.php' ? 'active' : ''; ?>" href="contact-queries.php">
+                        <i class="fas fa-envelope me-2"></i>Contact Queries
+                        <?php if ($pending_count > 0): ?>
+                            <span class="badge bg-danger float-end"><?php echo $pending_count; ?></span>
+                        <?php endif; ?>
+                    </a>
+
                     <?php if ($_SESSION['is_super_admin']): ?>
                     <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'admins.php' ? 'active' : ''; ?>" href="admins.php">
                         <i class="fas fa-user-shield me-2"></i>Admin Users
@@ -171,6 +185,7 @@ if(isset($_POST['toggle_theme'])) {
                                 'orders.php' => 'Orders',
                                 'categories.php' => 'Categories',
                                 'users.php' => 'Users',
+                                'contact-queries.php' => 'Contact Queries',
                                 'admins.php' => 'Admin Users',
                                 'settings.php' => 'Settings'
                             ];

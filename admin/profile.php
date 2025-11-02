@@ -222,7 +222,7 @@ $activity_stats = $activity_stmt->fetch(PDO::FETCH_ASSOC);
             </div>
 
             <!-- Quick Actions -->
-            <div class="card border-0 shadow-sm mt-4">
+            <!--<div class="card border-0 shadow-sm mt-4">
                 <div class="card-header bg-light border-0">
                     <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h6>
                 </div>
@@ -241,7 +241,7 @@ $activity_stats = $activity_stmt->fetch(PDO::FETCH_ASSOC);
                         <?php endif; ?>
                     </div>
                 </div>
-            </div>
+            </div>-->
         </div>
 
         <!-- Right Column - Forms -->
@@ -344,7 +344,7 @@ $activity_stats = $activity_stmt->fetch(PDO::FETCH_ASSOC);
             </div>
 
             <!-- Security Settings -->
-            <div class="card border-0 shadow-sm">
+            <!--<div class="card border-0 shadow-sm">
                 <div class="card-header bg-light border-0">
                     <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Security Settings</h5>
                 </div>
@@ -408,7 +408,7 @@ $activity_stats = $activity_stmt->fetch(PDO::FETCH_ASSOC);
                         </a>
                     </div>
                 </div>
-            </div>
+            </div>-->
         </div>
     </div>
 </div>
