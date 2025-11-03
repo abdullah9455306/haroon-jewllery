@@ -191,7 +191,7 @@ $main_image = !empty($product_images) ? $product_images[0]['image_path'] : ($pro
                     </div>
 
                     <!-- Add to Cart Section -->
-                    <!--<?php if ($product['stock_quantity'] > 0): ?>
+                    <?php if ($product['stock_quantity'] > 0): ?>
                         <div class="card bg-light border-0 mb-4">
                             <div class="card-body">
                                 <div class="row align-items-center">
@@ -208,12 +208,14 @@ $main_image = !empty($product_images) ? $product_images[0]['image_path'] : ($pro
                                                 data-product-id="<?php echo $product['id']; ?>"
                                                 data-product-name="<?php echo htmlspecialchars($product['name']); ?>"
                                                 data-product-price="<?php echo $final_price; ?>"
-                                                data-product-image="<?php echo htmlspecialchars($main_image); ?>" style="margin-bottom: -30px;">
+                                                data-product-image="<?php echo htmlspecialchars($main_image); ?>"
+                                                data-product-sku="<?php echo htmlspecialchars($product['sku']); ?>"
+                                                style="margin-bottom: 10px;">
                                             <i class="fas fa-shopping-cart me-2"></i>Add to Cart
                                         </button>
-                                        <button class="btn btn-outline-dark btn-lg w-100">
+                                        <!--<button class="btn btn-outline-dark btn-lg w-100">
                                             <i class="fas fa-heart me-2"></i>Add to Wishlist
-                                        </button>
+                                        </button>-->
                                     </div>
                                 </div>
                             </div>
@@ -223,7 +225,7 @@ $main_image = !empty($product_images) ? $product_images[0]['image_path'] : ($pro
                             <i class="fas fa-exclamation-triangle me-2"></i>
                             This product is currently out of stock. Please check back later.
                         </div>
-                    <?php endif; ?>-->
+                    <?php endif; ?>
 
                     <!-- Product Features -->
                     <div class="row text-center mb-4">
@@ -426,13 +428,20 @@ $main_image = !empty($product_images) ? $product_images[0]['image_path'] : ($pro
                                             <a href="product-detail.php?id=<?php echo $related['id']; ?>" class="btn btn-gold btn-sm w-75 mb-2">
                                                 Quick View
                                             </a>
-                                            <!--<button class="btn btn-outline-light btn-sm w-75 add-to-cart"
-                                                    data-product-id="<?php echo $related['id']; ?>"
-                                                    data-product-name="<?php echo htmlspecialchars($related['name']); ?>"
-                                                    data-product-price="<?php echo $related_final_price; ?>"
-                                                    data-product-image="<?php echo htmlspecialchars($related_image); ?>">
-                                                Add to Cart
-                                            </button>-->
+                                            <?php if ($related['stock_quantity'] > 0): ?>
+                                                <button class="btn btn-outline-light btn-sm w-75 add-to-cart"
+                                                        data-product-id="<?php echo $related['id']; ?>"
+                                                        data-product-name="<?php echo htmlspecialchars($related['name']); ?>"
+                                                        data-product-price="<?php echo $related_final_price; ?>"
+                                                        data-product-image="<?php echo htmlspecialchars($related_image); ?>"
+                                                        data-product-sku="<?php echo htmlspecialchars($related['sku']); ?>">
+                                                    Add to Cart
+                                                </button>
+                                            <?php else: ?>
+                                                <button class="btn btn-outline-light btn-sm w-75" disabled>
+                                                    Out of Stock
+                                                </button>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </div>
@@ -456,25 +465,8 @@ $main_image = !empty($product_images) ? $product_images[0]['image_path'] : ($pro
     <?php endif; ?>
 </div>
 
-<!-- Add to Cart Modal -->
-<div class="modal fade" id="cartModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Success!</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center">
-                <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
-                <p id="cartMessage"></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Continue Shopping</button>
-                <a href="cart.php" class="btn btn-gold">View Cart</a>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Success Message Container -->
+<div id="cartMessageContainer" style="position: fixed; top: 100px; right: 20px; z-index: 9999;"></div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -499,24 +491,47 @@ document.addEventListener('DOMContentLoaded', function() {
     const decreaseBtn = document.getElementById('decreaseQty');
     const increaseBtn = document.getElementById('increaseQty');
 
-    decreaseBtn.addEventListener('click', function() {
-        let currentVal = parseInt(quantityInput.value);
-        if (currentVal > 1) {
-            quantityInput.value = currentVal - 1;
-        }
-    });
+    if (decreaseBtn && increaseBtn) {
+        decreaseBtn.addEventListener('click', function() {
+            let currentVal = parseInt(quantityInput.value);
+            if (currentVal > 1) {
+                quantityInput.value = currentVal - 1;
+            }
+        });
 
-    increaseBtn.addEventListener('click', function() {
-        let currentVal = parseInt(quantityInput.value);
-        let maxVal = parseInt(quantityInput.getAttribute('max'));
-        if (currentVal < maxVal) {
-            quantityInput.value = currentVal + 1;
-        }
-    });
+        increaseBtn.addEventListener('click', function() {
+            let currentVal = parseInt(quantityInput.value);
+            let maxVal = parseInt(quantityInput.getAttribute('max'));
+            if (currentVal < maxVal) {
+                quantityInput.value = currentVal + 1;
+            }
+        });
+    }
 
-    // Add to cart functionality
+    // Show message function
+    function showMessage(message, type = 'success') {
+        const container = document.getElementById('cartMessageContainer');
+        const alertId = 'alert-' + Date.now();
+
+        container.innerHTML = `
+            <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert" style="min-width: 300px;">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+
+        // Auto hide after 3 seconds
+        setTimeout(() => {
+            const alert = document.getElementById(alertId);
+            if (alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }
+        }, 3000);
+    }
+
+    // Add to cart functionality for main product
     const addToCartBtn = document.querySelector('.add-to-cart-detail');
-    const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
 
     if (addToCartBtn) {
         addToCartBtn.addEventListener('click', function() {
@@ -524,94 +539,81 @@ document.addEventListener('DOMContentLoaded', function() {
             const productName = this.getAttribute('data-product-name');
             const productPrice = parseFloat(this.getAttribute('data-product-price'));
             const productImage = this.getAttribute('data-product-image');
+            const productSku = this.getAttribute('data-product-sku');
             const quantity = parseInt(quantityInput.value);
 
-            // Add to cart (using session storage for demo)
-            let cart = JSON.parse(sessionStorage.getItem('cart') || '[]');
+            // Show loading state
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+            this.disabled = true;
 
-            // Check if product already in cart
-            const existingItem = cart.find(item => item.id == productId);
-            if (existingItem) {
-                existingItem.quantity += quantity;
+            // Use the global addToCart function from header
+            if (typeof window.addToCart === 'function') {
+                window.addToCart(productId, productName, productPrice, productImage, quantity, productSku)
+                this.innerHTML = originalText;
+                this.disabled = false;
             } else {
-                cart.push({
-                    id: productId,
-                    name: productName,
-                    price: productPrice,
-                    image: productImage,
-                    quantity: quantity
-                });
+                // Fallback if global function is not available
+                this.innerHTML = originalText;
+                this.disabled = false;
+                showMessage('Please refresh the page and try again.', 'danger');
+                console.error('addToCart function not found');
             }
-
-            sessionStorage.setItem('cart', JSON.stringify(cart));
-
-            // Update cart count in header
-            updateCartCount(cart.reduce((total, item) => total + item.quantity, 0));
-
-            // Show success message
-            document.getElementById('cartMessage').textContent = `${quantity} x ${productName} has been added to your cart!`;
-            cartModal.show();
         });
     }
 
-    // Related products add to cart
+    // Add to cart functionality for related products
     const relatedAddToCartBtns = document.querySelectorAll('.product-card .add-to-cart');
+
     relatedAddToCartBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             const productId = this.getAttribute('data-product-id');
             const productName = this.getAttribute('data-product-name');
             const productPrice = parseFloat(this.getAttribute('data-product-price'));
             const productImage = this.getAttribute('data-product-image');
+            const productSku = this.getAttribute('data-product-sku');
 
-            let cart = JSON.parse(sessionStorage.getItem('cart') || '[]');
-            const existingItem = cart.find(item => item.id == productId);
+            // Show loading state
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+            this.disabled = true;
 
-            if (existingItem) {
-                existingItem.quantity += 1;
+            // Use the global addToCart function from header
+            if (typeof window.addToCart === 'function') {
+                window.addToCart(productId, productName, productPrice, productImage, 1, productSku)
+                this.innerHTML = originalText;
+                this.disabled = false;
             } else {
-                cart.push({
-                    id: productId,
-                    name: productName,
-                    price: productPrice,
-                    image: productImage,
-                    quantity: 1
-                });
+                // Fallback if global function is not available
+                this.innerHTML = originalText;
+                this.disabled = false;
+                showMessage('Please refresh the page and try again.', 'danger');
+                console.error('addToCart function not found');
             }
-
-            sessionStorage.setItem('cart', JSON.stringify(cart));
-            updateCartCount(cart.reduce((total, item) => total + item.quantity, 0));
-
-            document.getElementById('cartMessage').textContent = `${productName} has been added to your cart!`;
-            cartModal.show();
         });
     });
 
-    function updateCartCount(count) {
-        const cartBadge = document.querySelector('.navbar .badge');
-        if (cartBadge) {
-            cartBadge.textContent = count;
-        }
-    }
-
-    // Initialize cart count
-    const cart = JSON.parse(sessionStorage.getItem('cart') || '[]');
-    updateCartCount(cart.reduce((total, item) => total + item.quantity, 0));
+    // Product card hover effects for related products
+    const productCards = document.querySelectorAll('.product-card');
+    productCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            const overlay = this.querySelector('.card-img-overlay');
+            if (overlay) {
+                overlay.style.opacity = '1';
+            }
+        });
+        card.addEventListener('mouseleave', function() {
+            const overlay = this.querySelector('.card-img-overlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+            }
+        });
+    });
 
     // Initialize tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-
-    // Product card hover effects
-    const productCards = document.querySelectorAll('.product-card');
-    productCards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.querySelector('.card-img-overlay').style.opacity = '1';
-        });
-        card.addEventListener('mouseleave', function() {
-            this.querySelector('.card-img-overlay').style.opacity = '0';
-        });
     });
 });
 </script>
@@ -684,6 +686,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .cursor-pointer {
     cursor: pointer;
+}
+
+/* Loading state for buttons */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.fa-spin {
+    animation: spin 1s linear infinite;
 }
 
 @media (max-width: 768px) {

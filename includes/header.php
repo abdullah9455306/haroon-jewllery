@@ -14,8 +14,24 @@ $pdo = $db->getConnection();
 
 // Include functions
 require_once __DIR__ . '/../includes/functions.php';
-?>
 
+// Include cart helper
+require_once __DIR__ . '/../helpers/cart_helper.php';
+
+// Initialize cart helper and get cart count
+$cartHelper = new CartHelper();
+$cart_count = 0;
+
+if (isset($_SESSION['user_id'])) {
+    // Get cart count from database for logged-in users
+    $cart_count = $cartHelper->getCartCount($_SESSION['user_id']);
+} else {
+    // Get cart count from session for guests
+    if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
+        $cart_count = count($_SESSION['cart']);
+    }
+}
+?>
 
 <!DOCTYPE html>
 <html lang="en" data-theme="<?php echo isset($_SESSION['theme']) ? $_SESSION['theme'] : 'light'; ?>">
@@ -238,151 +254,274 @@ require_once __DIR__ . '/../includes/functions.php';
             border-top: 1px solid var(--primary-color);
             border-bottom: 1px solid var(--primary-color);
         }
+
+        /* Cart badge animation */
+        .cart-badge {
+            transition: all 0.3s ease;
+        }
+
+        .cart-badge.updated {
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .active>.page-link, .page-link.active{
+            background-color: var(--primary-color) !important;
+            border: var(--primary-color) !important;
+        }
+
+        .page-link{
+            color: var(--dark-color) !important;
+        }
+
+        .active .page-link{
+             color: white !important;
+        }
     </style>
 </head>
 <body>
     <!-- Navigation -->
-   <!-- Navigation -->
-   <nav class="navbar navbar-expand-lg navbar-light bg-dark shadow-sm sticky-top">
-       <div class="container-fluid">
-           <a class="navbar-brand brand-font" href="<?php echo SITE_URL; ?>/index.php">
-               <img src="<?php echo SITE_URL; ?>/assets/images/logo.webp" style="width: 130px;"/>
-           </a>
+    <nav class="navbar navbar-expand-lg navbar-light bg-dark shadow-sm sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand brand-font" href="<?php echo SITE_URL; ?>/index.php">
+                <img src="<?php echo SITE_URL; ?>/assets/images/logo.webp" style="width: 130px;"/>
+            </a>
 
-           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-               <span class="navbar-toggler-icon"></span>
-           </button>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-           <div class="collapse navbar-collapse" id="navbarNav">
-               <ul class="navbar-nav mx-auto">
-                   <li class="nav-item">
-                       <a class="nav-link" href="<?php echo SITE_URL; ?>/index.php">Home</a>
-                   </li>
-                   <li class="nav-item dropdown">
-                       <a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" role="button" data-bs-toggle="dropdown">
-                           Categories
-                       </a>
-                       <ul class="dropdown-menu">
-                           <?php
-                           $mainCategories = getMainCategories();
-                           if (!empty($mainCategories)):
-                               foreach ($mainCategories as $category):
-                           ?>
-                           <li>
-                               <a class="dropdown-item" href="<?php echo SITE_URL; ?>/pages/products.php?category=<?php echo urlencode($category['slug']); ?>">
-                                   <?php echo htmlspecialchars($category['name']); ?>
-                               </a>
-                           </li>
-                           <?php
-                               endforeach;
-                           else:
-                           ?>
-                           <li><a class="dropdown-item" href="#">No categories found</a></li>
-                           <?php endif; ?>
-                       </ul>
-                   </li>
-                   <li class="nav-item">
-                       <a class="nav-link" href="<?php echo SITE_URL; ?>/pages/products.php">All Products</a>
-                   </li>
-                   <li class="nav-item">
-                       <a class="nav-link" href="<?php echo SITE_URL; ?>/pages/about.php">About Us</a>
-                   </li>
-                   <li class="nav-item">
-                       <a class="nav-link" href="<?php echo SITE_URL; ?>/pages/contact.php">Contact</a>
-                   </li>
-               </ul>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo SITE_URL; ?>/index.php">Home</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" role="button" data-bs-toggle="dropdown">
+                            Categories
+                        </a>
+                        <ul class="dropdown-menu">
+                            <?php
+                            $mainCategories = getMainCategories();
+                            if (!empty($mainCategories)):
+                                foreach ($mainCategories as $category):
+                            ?>
+                            <li>
+                                <a class="dropdown-item" href="<?php echo SITE_URL; ?>/pages/products.php?category=<?php echo urlencode($category['slug']); ?>">
+                                    <?php echo htmlspecialchars($category['name']); ?>
+                                </a>
+                            </li>
+                            <?php
+                                endforeach;
+                            else:
+                            ?>
+                            <li><a class="dropdown-item" href="#">No categories found</a></li>
+                            <?php endif; ?>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo SITE_URL; ?>/pages/products.php">All Products</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo SITE_URL; ?>/pages/about.php">About Us</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo SITE_URL; ?>/pages/contact.php">Contact</a>
+                    </li>
+                </ul>
 
-               <!-- Rest of the header code remains the same -->
-               <div class="d-flex align-items-center">
-                   <!-- Theme Toggle -->
-                   <!--<button class="theme-toggle me-3" id="themeToggle">
-                       <i class="fas fa-moon"></i>
-                   </button>-->
+                <div class="d-flex align-items-center">
+                    <!-- Theme Toggle -->
+                    <!--<button class="theme-toggle me-3" id="themeToggle">
+                        <i class="fas fa-moon"></i>
+                    </button>-->
 
-                   <!-- User Account Section -->
-                   <?php if(isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])): ?>
-                       <!-- Logged in user menu -->
-                       <div class="dropdown me-3">
-                           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                               <i class="fas fa-user me-1"></i> My Account
-                           </a>
-                           <ul class="dropdown-menu">
-                               <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/pages/profile.php">
-                                   <i class="fas fa-user-circle me-2"></i>Profile
-                               </a></li>
-                               <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/pages/orders.php">
-                                   <i class="fas fa-shopping-bag me-2"></i>My Orders
-                               </a></li>
-                               <li><hr class="dropdown-divider"></li>
-                               <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/pages/logout.php">
-                                   <i class="fas fa-sign-out-alt me-2"></i>Logout
-                               </a></li>
-                           </ul>
-                       </div>
-                   <?php else: ?>
-                       <!-- Guest user menu -->
-                       <div class="d-flex align-items-center">
-                           <a href="<?php echo SITE_URL; ?>/pages/login.php" class="nav-link me-3">
-                               <i class="fas fa-sign-in-alt me-1"></i> Login
-                           </a>
-                           <a href="<?php echo SITE_URL; ?>/pages/register.php" class="nav-link">
-                               <i class="fas fa-user-plus me-1"></i> Register
-                           </a>
-                       </div>
-                   <?php endif; ?>
+                    <!-- User Account Section -->
+                    <?php if(isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])): ?>
+                        <!-- Logged in user menu -->
+                        <div class="dropdown me-3">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-1"></i> <?php echo htmlspecialchars($_SESSION['user_name'] ?? 'My Account'); ?>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/pages/profile.php">
+                                    <i class="fas fa-user-circle me-2"></i>Profile
+                                </a></li>
+                                <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/pages/orders.php">
+                                    <i class="fas fa-shopping-bag me-2"></i>My Orders
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/pages/logout.php">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                </a></li>
+                            </ul>
+                        </div>
+                    <?php else: ?>
+                        <!-- Guest user menu -->
+                        <div class="d-flex align-items-center">
+                            <a href="<?php echo SITE_URL; ?>/pages/login.php" class="nav-link me-3">
+                                <i class="fas fa-sign-in-alt me-1"></i> Login
+                            </a>
+                            <a href="<?php echo SITE_URL; ?>/pages/register.php" class="nav-link">
+                                <i class="fas fa-user-plus me-1"></i> Register
+                            </a>
+                        </div>
+                    <?php endif; ?>
 
-                   <!-- Shopping Cart -->
-                   <a href="<?php echo SITE_URL; ?>/pages/cart.php" class="btn btn-outline-dark position-relative ms-3">
-                       <i class="fas fa-shopping-cart"></i>
-                       <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                           <?php
-                           $cart_count = 0;
-                           if(isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
-                               $cart_count = count($_SESSION['cart']);
-                           }
-                           echo $cart_count;
-                           ?>
-                       </span>
-                   </a>
-               </div>
-           </div>
-       </div>
-   </nav>
+                    <!-- Shopping Cart -->
+                    <a href="<?php echo SITE_URL; ?>/pages/cart.php" class="btn btn-outline-dark position-relative ms-3" id="cartLink">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-badge" id="cartBadge">
+                            <?php echo $cart_count; ?>
+                        </span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Add to Cart Modal -->
+    <div class="modal fade" id="cartModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Success!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                    <p id="cartMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Continue Shopping</button>
+                    <a href="<?php echo SITE_URL; ?>/pages/cart.php" class="btn btn-gold">View Cart</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Theme Toggle Script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const themeToggle = document.getElementById('themeToggle');
-            const themeIcon = themeToggle.querySelector('i');
+            if (themeToggle) {
+                const themeIcon = themeToggle.querySelector('i');
 
-            // Initialize theme
-            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-            updateThemeIcon(currentTheme);
+                // Initialize theme
+                const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+                updateThemeIcon(currentTheme);
 
-            themeToggle.addEventListener('click', function() {
-                const currentTheme = document.documentElement.getAttribute('data-theme');
-                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                themeToggle.addEventListener('click', function() {
+                    const currentTheme = document.documentElement.getAttribute('data-theme');
+                    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
 
-                // Update theme
-                document.documentElement.setAttribute('data-theme', newTheme);
-                updateThemeIcon(newTheme);
+                    // Update theme
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    updateThemeIcon(newTheme);
 
-                // Save theme preference
-                fetch('api/update-theme.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ theme: newTheme })
+                    // Save theme preference
+                    fetch('<?php echo SITE_URL; ?>/api/update-theme.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ theme: newTheme })
+                    });
                 });
-            });
 
-            function updateThemeIcon(theme) {
-                if (theme === 'dark') {
-                    themeIcon.className = 'fas fa-sun';
-                } else {
-                    themeIcon.className = 'fas fa-moon';
+                function updateThemeIcon(theme) {
+                    if (theme === 'dark') {
+                        themeIcon.className = 'fas fa-sun';
+                    } else {
+                        themeIcon.className = 'fas fa-moon';
+                    }
                 }
             }
+
+            // Cart functionality
+            function updateCartCount(count) {
+                const cartBadge = document.getElementById('cartBadge');
+                if (cartBadge) {
+                    cartBadge.textContent = count;
+                    cartBadge.classList.add('updated');
+                    setTimeout(() => {
+                        cartBadge.classList.remove('updated');
+                    }, 500);
+                }
+            }
+
+            // Global function to check if user is logged in
+            function isUserLoggedIn() {
+                return <?php echo isset($_SESSION['user_id']) ? 'true' : 'false'; ?>;
+            }
+
+            // Global function to add to cart
+            function addToCart(productId, productName, productPrice, productImage, quantity = 1) {
+                // Check if user is logged in
+                if (!isUserLoggedIn()) {
+                    // Store product info in sessionStorage for redirect back
+                    sessionStorage.setItem('pending_cart_product', JSON.stringify({
+                        id: productId,
+                        name: productName,
+                        price: productPrice,
+                        image: productImage,
+                        quantity: quantity
+                    }));
+
+                    // Redirect to login
+                    window.location.href = '<?php echo SITE_URL; ?>/pages/login.php?redirect=' + encodeURIComponent(window.location.href);
+                    return;
+                }
+
+                // User is logged in, proceed with AJAX call
+                fetch('<?php echo SITE_URL; ?>/ajax/add_to_cart.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `product_id=${productId}&quantity=${quantity}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    } else if (data.success) {
+                        // Update cart count in header
+                        updateCartCount(data.cart_count);
+
+                        // Show success message
+                        showCartSuccess(productName, quantity);
+                    } else {
+                        alert(data.message || 'Failed to add to cart');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while adding to cart');
+                });
+            }
+
+            function showCartSuccess(productName, quantity) {
+                const cartMessage = document.getElementById('cartMessage');
+                if (cartMessage) {
+                    cartMessage.textContent = `${quantity} x ${productName} has been added to your cart!`;
+                    const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
+                    cartModal.show();
+                } else {
+                    // Fallback alert
+                    alert(`${productName} added to cart successfully!`);
+                }
+            }
+
+            // Make functions globally available
+            window.updateCartCount = updateCartCount;
+            window.addToCart = addToCart;
+            window.isUserLoggedIn = isUserLoggedIn;
+            window.showCartSuccess = showCartSuccess;
         });
     </script>

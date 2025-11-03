@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     $remember_me = isset($_POST['remember_me']);
+    $pending_cart_product = $_POST['pending_cart_product'] ?? '';
 
     // Validation
     $errors = [];
@@ -51,6 +52,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_name'] = $user['name'];
                 $_SESSION['user_email'] = $user['email'];
 
+                // Handle pending cart product if exists
+                if (!empty($pending_cart_product)) {
+                    $pendingProduct = json_decode($pending_cart_product, true);
+                    if ($pendingProduct && is_array($pendingProduct)) {
+                        // Add the pending product to cart
+                        require_once '../helpers/cart_helper.php';
+                        $cartHelper = new CartHelper();
+
+                        // Check if product exists and is in stock
+                        $productStmt = $conn->prepare("SELECT id, stock_quantity FROM products WHERE id = ? AND status = 'active'");
+                        $productStmt->execute([$pendingProduct['id']]);
+                        $product = $productStmt->fetch(PDO::FETCH_ASSOC);
+
+                        if ($product && $product['stock_quantity'] > 0) {
+                            $cartHelper->addToCart(
+                                $user['id'],
+                                $pendingProduct['id'],
+                                $pendingProduct['quantity'] ?? 1,
+                                $pendingProduct['price']
+                            );
+
+                            // Set success message for cart addition
+                            $_SESSION['cart_success'] = "Product added to cart successfully!";
+                        }
+                    }
+                }
+
                 // Set remember me cookie if requested
                 if ($remember_me) {
                     $token = bin2hex(random_bytes(32));
@@ -63,9 +91,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $token_stmt->execute([$token, date('Y-m-d H:i:s', $expiry), $user['id']]);
                 }
 
+                // Update last login
+                $updateStmt = $conn->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
+                $updateStmt->execute([$user['id']]);
+
                 // Redirect to intended page or profile
                 $redirect_url = $_SESSION['redirect_url'] ?? 'profile.php';
                 unset($_SESSION['redirect_url']);
+
+                // If there was a pending cart product, redirect to cart page
+                if (!empty($pending_cart_product)) {
+                    $redirect_url = 'cart.php';
+                }
 
                 // Use header redirect for successful login
                 header("Location: " . $redirect_url);
@@ -110,6 +147,16 @@ require_once '../includes/header.php';
                         <p class="text-muted">Sign in to your <?php echo SITE_NAME; ?> account</p>
                     </div>
 
+                    <!-- Success Message (for cart addition after login) -->
+                    <?php if (isset($_SESSION['cart_success'])): ?>
+                        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <?php echo $_SESSION['cart_success']; ?>
+                            <?php unset($_SESSION['cart_success']); ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <?php endif; ?>
+
                     <!-- Error Message -->
                     <?php if ($error_message): ?>
                         <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
@@ -121,6 +168,8 @@ require_once '../includes/header.php';
 
                     <!-- Login Form -->
                     <form method="POST" action="" id="loginForm" novalidate>
+                        <input type="hidden" name="pending_cart_product" id="pendingCartProduct" value="">
+
                         <!-- Email -->
                         <div class="mb-4">
                             <label for="email" class="form-label">Email Address *</label>
@@ -166,28 +215,6 @@ require_once '../includes/header.php';
                                 <i class="fas fa-sign-in-alt me-2"></i>Sign In
                             </button>
                         </div>
-
-                        <!-- Divider -->
-                        <!--<div class="position-relative text-center mb-4">
-                            <hr>
-                            <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted">
-                                or continue with
-                            </span>
-                        </div>-->
-
-                        <!-- Social Login Buttons -->
-                        <!--<div class="row g-2 mb-4">
-                            <div class="col-md-6">
-                                <button type="button" class="btn btn-outline-dark w-100 social-login-btn" data-provider="google">
-                                    <i class="fab fa-google me-2"></i>Google
-                                </button>
-                            </div>
-                            <div class="col-md-6">
-                                <button type="button" class="btn btn-outline-primary w-100 social-login-btn" data-provider="facebook">
-                                    <i class="fab fa-facebook-f me-2"></i>Facebook
-                                </button>
-                            </div>
-                        </div>-->
 
                         <!-- Registration Link -->
                         <div class="text-center">
@@ -454,6 +481,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
+    const pendingCartProductInput = document.getElementById('pendingCartProduct');
+
+    // Check for pending cart product in sessionStorage
+    const pendingProduct = sessionStorage.getItem('pending_cart_product');
+    if (pendingProduct) {
+        pendingCartProductInput.value = pendingProduct;
+        // Show notification about pending cart item
+        showPendingCartNotification();
+    }
+
+    function showPendingCartNotification() {
+        // Create a notification about pending cart item
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-info alert-dismissible fade show mb-4';
+        notification.innerHTML = `
+            <i class="fas fa-info-circle me-2"></i>
+            You have an item waiting to be added to your cart. Login to complete your purchase.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        // Insert after the header
+        const header = document.querySelector('.text-center.mb-5');
+        if (header) {
+            header.parentNode.insertBefore(notification, header.nextSibling);
+        }
+    }
 
     // Toggle password visibility
     document.querySelectorAll('.toggle-password').forEach(button => {
@@ -471,30 +524,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-
-    // Social login handlers
-    document.querySelectorAll('.social-login-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const provider = this.getAttribute('data-provider');
-            handleSocialLogin(provider);
-        });
-    });
-
-    function handleSocialLogin(provider) {
-        // Show loading state
-        const button = document.querySelector(`[data-provider="${provider}"]`);
-        const originalText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Connecting...';
-        button.disabled = true;
-
-        // Simulate social login process
-        setTimeout(() => {
-            // In a real implementation, this would redirect to OAuth endpoint
-            alert(`${provider.charAt(0).toUpperCase() + provider.slice(1)} login would be implemented here.`);
-            button.innerHTML = originalText;
-            button.disabled = false;
-        }, 1500);
-    }
 
     // Form submission with validation
     loginForm.addEventListener('submit', function(e) {
@@ -535,11 +564,8 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.classList.add('btn-loading');
             submitBtn.disabled = true;
 
-            // Simulate API call delay
-            setTimeout(() => {
-                submitBtn.classList.remove('btn-loading');
-                submitBtn.disabled = false;
-            }, 2000);
+            // Clear pending cart from sessionStorage on successful form submission
+            sessionStorage.removeItem('pending_cart_product');
         }
     });
 
@@ -550,40 +576,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Auto-focus on email field
     emailInput.focus();
-
-    // Demo credentials helper (remove in production)
-//     const demoCredentials = document.createElement('div');
-//     demoCredentials.className = 'alert alert-info mt-3';
-//     demoCredentials.innerHTML = `
-//         <strong>Demo Credentials:</strong><br>
-//         Email: demo@haroonjewellery.com<br>
-//         Password: Demo123
-//     `;
-
-    // Only show in development environment
-//     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-//         loginForm.parentNode.insertBefore(demoCredentials, loginForm.nextSibling);
-//     }
-
-    // Keyboard shortcuts
-    document.addEventListener('keydown', function(e) {
-        // Ctrl + / to focus on email
-        if (e.ctrlKey && e.key === '/') {
-            e.preventDefault();
-            emailInput.focus();
-        }
-
-        // Ctrl + . to focus on password
-        if (e.ctrlKey && e.key === '.') {
-            e.preventDefault();
-            passwordInput.focus();
-        }
-
-        // Enter to submit form when both fields are filled
-        if (e.key === 'Enter' && emailInput.value && passwordInput.value) {
-            loginForm.requestSubmit();
-        }
-    });
 
     // Remember me functionality
     const rememberCheckbox = document.getElementById('remember_me');
@@ -599,6 +591,14 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('remember_email', emailInput.value);
         } else {
             localStorage.removeItem('remember_email');
+        }
+    });
+
+    // Clear pending cart when leaving page without logging in
+    window.addEventListener('beforeunload', function() {
+        // Only clear if user is navigating away from login page without submitting
+        if (!document.querySelector('.btn-loading')) {
+            sessionStorage.removeItem('pending_cart_product');
         }
     });
 });

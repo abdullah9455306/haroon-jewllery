@@ -122,7 +122,6 @@ $categories = $conn->query("SELECT name, slug FROM categories WHERE status = 'ac
 $priceRange = $conn->query("SELECT MIN(price) as min_price, MAX(price) as max_price FROM products WHERE status = 'active'")->fetch(PDO::FETCH_ASSOC);
 ?>
 
-<!-- REST OF THE HTML CODE REMAINS EXACTLY THE SAME AS BEFORE -->
 <div class="container-fluid py-5">
     <div class="row">
         <!-- Sidebar Filters -->
@@ -328,13 +327,13 @@ $priceRange = $conn->query("SELECT MIN(price) as min_price, MAX(price) as max_pr
                                                 <i class="fas fa-eye me-1"></i>Quick View
                                             </a>
                                             <?php if ($product['stock_quantity'] > 0): ?>
-                                                <!--<button class="btn btn-outline-light btn-sm w-75 add-to-cart"
+                                                <button class="btn btn-outline-light btn-sm w-75 add-to-cart"
                                                         data-product-id="<?php echo $product['id']; ?>"
                                                         data-product-name="<?php echo htmlspecialchars($product['name']); ?>"
                                                         data-product-price="<?php echo $finalPrice; ?>"
                                                         data-product-image="<?php echo htmlspecialchars($productImage); ?>">
                                                     <i class="fas fa-shopping-cart me-1"></i>Add to Cart
-                                                </button>-->
+                                                </button>
                                             <?php else: ?>
                                                 <button class="btn btn-outline-light btn-sm w-75" disabled>
                                                     <i class="fas fa-times me-1"></i>Out of Stock
@@ -455,26 +454,6 @@ $priceRange = $conn->query("SELECT MIN(price) as min_price, MAX(price) as max_pr
     </div>
 </div>
 
-<!-- Add to Cart Modal -->
-<div class="modal fade" id="cartModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Success!</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center">
-                <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
-                <p id="cartMessage"></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Continue Shopping</button>
-                <a href="cart.php" class="btn btn-gold">View Cart</a>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Add hover effect to product cards
@@ -488,9 +467,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Add to cart functionality
+    // Add to cart functionality using the global function from header
     const addToCartButtons = document.querySelectorAll('.add-to-cart');
-    const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
 
     addToCartButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -499,44 +477,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const productPrice = parseFloat(this.getAttribute('data-product-price'));
             const productImage = this.getAttribute('data-product-image');
 
-            // Add to cart (using session storage for demo)
-            let cart = JSON.parse(sessionStorage.getItem('cart') || '[]');
-
-            // Check if product already in cart
-            const existingItem = cart.find(item => item.id == productId);
-            if (existingItem) {
-                existingItem.quantity += 1;
+            // Use the global addToCart function from header
+            if (typeof window.addToCart === 'function') {
+                window.addToCart(productId, productName, productPrice, productImage, 1);
             } else {
-                cart.push({
-                    id: productId,
-                    name: productName,
-                    price: productPrice,
-                    image: productImage,
-                    quantity: 1
-                });
+                // Fallback if global function is not available
+                console.error('addToCart function not found');
+                alert('Please refresh the page and try again.');
             }
-
-            sessionStorage.setItem('cart', JSON.stringify(cart));
-
-            // Update cart count in header
-            updateCartCount(cart.length);
-
-            // Show success message
-            document.getElementById('cartMessage').textContent = `${productName} has been added to your cart!`;
-            cartModal.show();
         });
     });
-
-    function updateCartCount(count) {
-        const cartBadge = document.querySelector('.navbar .badge');
-        if (cartBadge) {
-            cartBadge.textContent = count;
-        }
-    }
-
-    // Initialize cart count
-    const cart = JSON.parse(sessionStorage.getItem('cart') || '[]');
-    updateCartCount(cart.length);
 
     // Price range form submission with validation
     const priceForm = document.getElementById('priceFilterForm');
@@ -558,6 +508,21 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function(e) {
             // For demo purposes, we'll let the link work normally
             // In a real implementation, you might want to use AJAX to load product details
+        });
+    });
+
+    // Add loading states to add to cart buttons
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Adding...';
+            this.disabled = true;
+
+            // Reset button after 3 seconds (in case of error)
+            setTimeout(() => {
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }, 3000);
         });
     });
 });
@@ -609,6 +574,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .badge {
     font-size: 0.7em;
+}
+
+/* Loading state for buttons */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.fa-spin {
+    animation: spin 1s linear infinite;
 }
 
 @media (max-width: 768px) {
