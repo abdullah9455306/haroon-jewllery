@@ -398,7 +398,7 @@ if (isset($_SESSION['user_id'])) {
                     <p id="cartMessage"></p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Continue Shopping</button>
+                    <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Continue Shopping</button>
                     <a href="<?php echo SITE_URL; ?>/pages/cart.php" class="btn btn-gold">View Cart</a>
                 </div>
             </div>

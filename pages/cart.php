@@ -385,7 +385,7 @@ $cartItems = array_slice($allCartItems, $offset, $itemsPerPage);
                 <p>Are you sure you want to remove "<span id="removeItemName"></span>" from your cart?</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" id="confirmRemove">Remove Item</button>
             </div>
         </div>
@@ -404,7 +404,7 @@ $cartItems = array_slice($allCartItems, $offset, $itemsPerPage);
                 <p>Decreasing the quantity to zero will remove "<span id="decreaseItemName"></span>" from your cart. Do you want to continue?</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" id="confirmDecreaseRemove">Remove Item</button>
             </div>
         </div>
