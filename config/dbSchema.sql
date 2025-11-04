@@ -142,23 +142,25 @@ CREATE TABLE IF NOT EXISTS cart (
 );
 
 -- JazzCash transactions table
-CREATE TABLE jazzcash_transactions (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    order_id INT NOT NULL,
-    pp_TxnRefNo VARCHAR(255) UNIQUE NOT NULL,
-    pp_MerchantID VARCHAR(255) NOT NULL,
-    pp_Amount DECIMAL(10,2) NOT NULL,
-    pp_MobileNumber VARCHAR(15) NOT NULL,
-    pp_ResponseCode VARCHAR(10),
-    pp_ResponseMessage TEXT,
-    pp_BankID VARCHAR(50),
-    pp_SecureHash VARCHAR(255),
-    pp_Language VARCHAR(10) DEFAULT 'EN',
-    pp_Version VARCHAR(10) DEFAULT '1.1',
-    status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+CREATE TABLE `jazzcash_transactions` (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  order_id    INT(11) NOT NULL,
+  pp_TxnRefNo VARCHAR(255) UNIQUE NOT NULL,
+  pp_MerchantID VARCHAR(255) NOT NULL,
+  pp_Amount DECIMAL(10,2) NOT NULL,
+  pp_MobileNumber VARCHAR(15) DEFAULT NULL,
+  pp_CNIC VARCHAR(15) DEFAULT NULL,
+  pp_ResponseCode VARCHAR(10) DEFAULT NULL,
+  pp_ResponseMessage TEXT DEFAULT NULL,
+  pp_BankID VARCHAR(50) DEFAULT NULL,
+  pp_SecureHash VARCHAR(255) DEFAULT NULL,
+  pp_Language VARCHAR(10) DEFAULT 'EN',
+  pp_Version VARCHAR(10) DEFAULT '1.1',
+  api_version ENUM('1.1','2.0') DEFAULT '1.1',
+  status ENUM('pending','completed','failed') DEFAULT 'pending',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
 CREATE TABLE card_payments (

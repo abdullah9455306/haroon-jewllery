@@ -5,18 +5,22 @@ define('DB_NAME', 'haroon_jewellery');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 
-// JazzCash Mobile Configuration
+// JazzCash Configuration
+define('JAZZCASH_API_VERSION', '2.0'); // Set to '1.1' or '2.0'
+define('JAZZCASH_ENVIRONMENT', 'sandbox'); // 'sandbox' or 'production'
+
+// JazzCash Mobile Configuration v1.1
 define('JAZZCASH_MERCHANT_ID', 'MC408931');
 define('JAZZCASH_PASSWORD', 't15va48u3u');
 define('JAZZCASH_SALT', '40x15uy069');
 
-// JazzCash Card Configuration
-define('JAZZCASH_CARD_MERCHANT_ID', 'MC408931');
-define('JAZZCASH_CARD_PASSWORD', 't15va48u3u');
-define('JAZZCASH_CARD_SALT', '40x15uy069');
+// JazzCash Configuration v2.0
+define('JAZZCASH_V2_MERCHANT_ID', 'MC408931');
+define('JAZZCASH_V2_INTEGRITY_SALT', '40x15uy069');
+define('JAZZCASH_V2_PASSWORD', 't15va48u3u');
 
-define('JAZZCASH_RETURN_URL', 'http://localhost/ecommerce/payment-callback.php');
-define('JAZZCASH_API_VERSION', '1.1');
+define('JAZZCASH_RETURN_URL', 'http://localhost:8080/haroon-jewellery/api/payment-callback.php');
+define('JAZZCASH_CALLBACK_URL', 'http://localhost:8080/haroon-jewellery/api/payment-callback.php');
 
 // Site configuration
 define('SITE_NAME', 'Haroon Jewellery');

@@ -39,6 +39,11 @@ if ($cartIsEmpty) {
 }
 
 require_once '../includes/header.php';
+
+// Initialize JazzCash Payment
+require_once '../api/jazzcash-payment.php';
+$jazzcash = new JazzCashPayment();
+$apiVersion = $jazzcash->getApiVersion();
 ?>
 
 <div class="container py-5">
@@ -46,7 +51,7 @@ require_once '../includes/header.php';
         <div class="col-lg-8">
             <h2 class="mb-4 brand-font">Checkout</h2>
 
-            <form id="checkoutForm" action="payment.php" method="POST">
+            <form id="checkoutForm" action="process-order.php" method="POST">
                 <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">Shipping Information</h5>
@@ -67,7 +72,11 @@ require_once '../includes/header.php';
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="mobile" class="form-label">Mobile Number *</label>
-                                <input type="text" class="form-control" id="mobile" name="mobile" required>
+                                <input type="text" class="form-control" id="mobile" name="mobile" required
+                                       pattern="03[0-9]{9}"
+                                       placeholder="03XXXXXXXXX"
+                                       value="<?php echo isset($_SESSION['user_mobile']) ? htmlspecialchars($_SESSION['user_mobile']) : ''; ?>">
+                                <small class="form-text text-muted">Format: 03XX-XXXXXXX</small>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="city" class="form-label">City *</label>
@@ -94,47 +103,64 @@ require_once '../includes/header.php';
                             </label>
                         </div>
 
-                        <!--<div class="form-check mb-3">
-                            <input class="form-check-input" type="radio" name="paymentMethod" id="jazzcash_card" value="jazzcash_card">
-                            <label class="form-check-label" for="jazzcash_card">
-                                <i class="fas fa-credit-card me-2"></i>Debit/Credit Card (JazzCash)
-                                <small class="d-block text-muted">Pay using your debit or credit card</small>
-                            </label>
-                        </div>-->
+                        <!-- JazzCash Payment Details -->
+                        <div id="jazzcashDetails" class="border rounded p-3 mt-3">
+                            <h6 class="mb-3">JazzCash Payment Details</h6>
 
-                        <!-- Card Details (Hidden by default) -->
-                        <!--<div id="cardDetails" class="border rounded p-3 mt-3" style="display: none;">
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="cardNumber" class="form-label">Card Number</label>
-                                    <input type="text" class="form-control" id="cardNumber" name="cardNumber" placeholder="1234 5678 9012 3456">
+                                    <img
+                                        src="<?php echo SITE_URL; ?>/assets/images/jazz-cash.png"
+                                        style="width: 230px;border-radius: 10px;"
+                                    />
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label for="cardExpiry" class="form-label">Expiry Date</label>
-                                    <input type="text" class="form-control" id="cardExpiry" name="cardExpiry" placeholder="MM/YY">
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label for="cardCVC" class="form-label">CVC</label>
-                                    <input type="text" class="form-control" id="cardCVC" name="cardCVC" placeholder="123">
-                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                  <?php if ($apiVersion === '2.0'): ?>
+                                    <div class="form-group mb-3">
+                                         <label for="jazzcash_mobile_number" class="form-label">JazzCash Mobile Number *</label>
+                                        <input type="text" class="form-control" id="jazzcash_mobile_number" name="jazzcash_mobile_number"
+                                               pattern="03[0-9]{9}"
+                                               placeholder="03XXXXXXXXX"
+                                               required>
+                                         <small class="form-text text-muted">Your registered JazzCash mobile number</small>
+                                     </div>
+                                     <div class="form-group">
+                                         <label for="jazzcash_cnic" class="form-label">Last 6 Digits of CNIC *</label>
+                                         <input type="text" class="form-control" id="jazzcash_cnic" name="jazzcash_cnic"
+                                                pattern="[0-9]{6}"
+                                                placeholder="XXXXXX"
+                                                required>
+                                         <small class="form-text text-muted">Format: XXXXXX</small>
+                                     </div>
+                                     <?php else: ?>
+                                        <div class="form-group">
+                                            <label for="jazzcash_mobile_number" class="form-label">JazzCash Mobile Number *</label>
+                                            <input type="text" class="form-control" id="jazzcash_mobile_number" name="jazzcash_mobile_number"
+                                                   pattern="03[0-9]{9}"
+                                                   placeholder="03XXXXXXXXX"
+                                                   required>
+                                            <small class="form-text text-muted">Your registered JazzCash mobile number</small>
+                                        </div>
+                                     <?php endif; ?>
+                                    </div>
                             </div>
-                            <div class="mb-3">
-                                <label for="cardHolderName" class="form-label">Cardholder Name</label>
-                                <input type="text" class="form-control" id="cardHolderName" name="cardHolderName" placeholder="John Doe">
+
+                            <div class="alert alert-info">
+                                <small>
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    You will be redirected to JazzCash secure payment page to complete your transaction.
+                                </small>
                             </div>
                         </div>
-
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="radio" name="paymentMethod" id="cod" value="cod">
-                            <label class="form-check-label" for="cod">
-                                <i class="fas fa-money-bill-wave me-2"></i>Cash on Delivery
-                                <small class="d-block text-muted">Pay when you receive your order</small>
-                            </label>
-                        </div>-->
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-gold btn-lg w-100">Place Order</button>
+                <input type="hidden" name="api_version" value="<?php echo $apiVersion; ?>">
+                <button type="submit" class="btn btn-gold btn-lg w-100" id="placeOrderBtn">
+                    <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+                    Place Order & Pay with JazzCash
+                </button>
             </form>
         </div>
 
@@ -204,48 +230,101 @@ require_once '../includes/header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const paymentMethods = document.querySelectorAll('input[name="paymentMethod"]');
-    const cardDetails = document.getElementById('cardDetails');
+    const checkoutForm = document.getElementById('checkoutForm');
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    const spinner = placeOrderBtn.querySelector('.spinner-border');
 
-    paymentMethods.forEach(method => {
-        method.addEventListener('change', function() {
-            if (this.value === 'jazzcash_card') {
-                cardDetails.style.display = 'block';
-                // Make card fields required when card payment is selected
-                document.getElementById('cardNumber').required = true;
-                document.getElementById('cardExpiry').required = true;
-                document.getElementById('cardCVC').required = true;
-                document.getElementById('cardHolderName').required = true;
-            } else {
-                cardDetails.style.display = 'none';
-                // Remove required attribute when other payment methods are selected
-                document.getElementById('cardNumber').required = false;
-                document.getElementById('cardExpiry').required = false;
-                document.getElementById('cardCVC').required = false;
-                document.getElementById('cardHolderName').required = false;
-            }
+    // Mobile number formatting
+    const mobileInputs = document.querySelectorAll('input[type="text"][pattern*="03"]');
+    mobileInputs.forEach(input => {
+        input.addEventListener('input', function(e) {
+            // Remove all non-digit characters and limit to 11 digits
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.substring(0, 11);
+            e.target.value = value;
         });
     });
 
+    // CNIC formatting
+    const cnicInput = document.getElementById('jazzcash_cnic');
+    if (cnicInput) {
+        cnicInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            // Limit to 6 digits maximum
+            value = value.substring(0, 6);
+            e.target.value = value;
+        });
+    }
+
     // Form validation
-    const checkoutForm = document.getElementById('checkoutForm');
     checkoutForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
         let isValid = true;
         const requiredFields = checkoutForm.querySelectorAll('[required]');
 
+        // Clear previous errors
+        requiredFields.forEach(field => {
+            field.classList.remove('is-invalid');
+        });
+
+        // Validate required fields
         requiredFields.forEach(field => {
             if (!field.value.trim()) {
                 isValid = false;
                 field.classList.add('is-invalid');
-            } else {
-                field.classList.remove('is-invalid');
             }
         });
 
-        if (!isValid) {
-            e.preventDefault();
-            alert('Please fill in all required fields.');
+        // Validate mobile format
+        const mobileFields = checkoutForm.querySelectorAll('input[pattern*="03"]');
+        mobileFields.forEach(field => {
+            const pattern = new RegExp(field.pattern);
+            if (field.value && !pattern.test(field.value)) {
+                isValid = false;
+                field.classList.add('is-invalid');
+            }
+        });
+
+        // Validate CNIC if exists
+        if (cnicInput && cnicInput.value) {
+            const cnicPattern = new RegExp(cnicInput.pattern);
+            if (!cnicPattern.test(cnicInput.value)) {
+                isValid = false;
+                cnicInput.classList.add('is-invalid');
+            }
         }
+
+        if (!isValid) {
+            alert('Please fill in all required fields with valid information.');
+            return;
+        }
+
+        // Show loading spinner
+        spinner.classList.remove('d-none');
+        placeOrderBtn.disabled = true;
+
+        // Submit form
+        this.submit();
+    });
+
+    // Real-time validation
+    const inputs = checkoutForm.querySelectorAll('input, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.hasAttribute('required') && !this.value.trim()) {
+                this.classList.add('is-invalid');
+            } else if (this.hasAttribute('pattern')) {
+                const pattern = new RegExp(this.pattern);
+                if (this.value && !pattern.test(this.value)) {
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
     });
 });
 </script>
@@ -253,11 +332,31 @@ document.addEventListener('DOMContentLoaded', function() {
 <style>
 .is-invalid {
     border-color: #dc3545;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 3.6.4.4.4-.4'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
 }
 
 .form-check-input:checked {
     background-color: var(--primary-color);
     border-color: var(--primary-color);
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+}
+
+@media (max-width: 768px) {
+    .card-body .row {
+        margin-bottom: 0;
+    }
+
+    .mb-3 {
+        margin-bottom: 1rem !important;
+    }
 }
 </style>
 

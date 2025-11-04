@@ -2,17 +2,21 @@
 require_once '../config/constants.php';
 
 class JazzCashPayment {
-    private $merchantId;
-    private $password;
-    private $salt;
-    private $returnUrl;
-    private $type; // 'mobile' or 'card'
+    public $merchantId;
+    public $password;
+    public $salt;
+    public $returnUrl;
+    public $apiVersion;
+    public $environment;
 
-    public function __construct($type = 'mobile') {
-        if($type === 'card') {
-            $this->merchantId = JAZZCASH_CARD_MERCHANT_ID;
-            $this->password = JAZZCASH_CARD_PASSWORD;
-            $this->salt = JAZZCASH_CARD_SALT;
+    public function __construct($apiVersion = null) {
+        $this->apiVersion = $apiVersion ?: JAZZCASH_API_VERSION;
+        $this->environment = JAZZCASH_ENVIRONMENT;
+
+        if($this->apiVersion === '2.0') {
+            $this->merchantId = JAZZCASH_V2_MERCHANT_ID;
+            $this->password = JAZZCASH_V2_PASSWORD;
+            $this->salt = JAZZCASH_V2_INTEGRITY_SALT;
         } else {
             $this->merchantId = JAZZCASH_MERCHANT_ID;
             $this->password = JAZZCASH_PASSWORD;
@@ -20,24 +24,49 @@ class JazzCashPayment {
         }
 
         $this->returnUrl = JAZZCASH_RETURN_URL;
-        $this->type = $type;
     }
 
-    public function generateHash($data) {
-        $string = '';
-        foreach($data as $key => $value) {
-            if($value != '') {
-                $string .= $value . '&';
-            }
+    public function getApiVersion() {
+        return $this->apiVersion;
+    }
+
+    public function getBaseUrl() {
+        if ($this->environment === 'production') {
+            return 'https://jazzcash.com.pk/';
+        } else {
+            return 'https://sandbox.jazzcash.com.pk/';
         }
-        $string = rtrim($string, '&');
-        $string = $string . $this->salt;
-        return hash('sha256', $string);
     }
 
-    public function initiateMobilePayment($orderData) {
-        $pp_TxnRefNo = 'TXN' . time() . rand(1000, 9999);
-        $pp_Amount = $orderData['amount'] * 100; // Convert to paisa
+    public function generateHash($data_array) {
+        ksort($data_array);
+
+        $str = '';
+        foreach($data_array as $key => $value)
+         {
+            if(!empty($value)){
+                $str = $str . '&' . $value;
+            }
+         }
+
+         $str = $this->salt.$str;
+         $pp_SecureHash = hash_hmac('sha256', $str, $this->salt);
+
+         return $pp_SecureHash;
+    }
+
+    public function initiatePaymentV1($orderData) {
+        date_default_timezone_set('Asia/Karachi');
+
+        $dateTime = new DateTime();
+        $pp_TxnDateTime = $dateTime->format('YmdHis');
+
+        $expiryDateTime = $dateTime;
+        $expiryDateTime->modify('+' . 1 . ' hours');
+        $pp_TxnExpiryDateTime = $expiryDateTime->format('YmdHis');
+        $pp_TxnRefNo = 'T'.$pp_TxnDateTime;
+
+        $pp_Amount = $orderData['amount'];
 
         $data = [
             'pp_Version' => '1.1',
@@ -51,13 +80,57 @@ class JazzCashPayment {
             'pp_TxnRefNo' => $pp_TxnRefNo,
             'pp_Amount' => $pp_Amount,
             'pp_TxnCurrency' => 'PKR',
-            'pp_TxnDateTime' => date('YmdHis'),
-            'pp_BillReference' => $orderData['bill_reference'],
+            'pp_TxnDateTime' => $pp_TxnDateTime,
+            'pp_BillReference' => 'billref',
             'pp_Description' => $orderData['description'],
-            'pp_TxnExpiryDateTime' => date('YmdHis', strtotime('+1 hour')),
-            'pp_ReturnURL' => $this->returnUrl,
+            'pp_TxnExpiryDateTime' => $pp_TxnExpiryDateTime,
             'pp_SecureHash' => '',
             'ppmpf_1' => $orderData['mobile_number'],
+            'ppmpf_2' => '',
+            'ppmpf_3' => '',
+            'ppmpf_4' => '',
+            'ppmpf_5' => ''
+        ];
+
+        $data['pp_SecureHash'] = $this->generateHash($data);
+
+        return [
+            'data' => $data,
+            'txn_ref_no' => $pp_TxnRefNo,
+            'payment_url' => $this->getBaseUrl() . 'ApplicationAPI/API/2.0/Purchase/DoMWalletTransaction'
+        ];
+    }
+
+    public function initiatePaymentV2($orderData) {
+        date_default_timezone_set('Asia/Karachi');
+
+        $dateTime = new DateTime();
+        $pp_TxnDateTime = $dateTime->format('YmdHis');
+
+        $expiryDateTime = $dateTime;
+        $expiryDateTime->modify('+' . 1 . ' hours');
+        $pp_TxnExpiryDateTime = $expiryDateTime->format('YmdHis');
+        $pp_TxnRefNo = 'T'.$pp_TxnDateTime;
+
+        $pp_Amount = $orderData['amount'];
+
+        $data = [
+            'pp_Language' => 'EN',
+            'pp_MerchantID' => $this->merchantId,
+            'pp_SubMerchantID' => '',
+            'pp_Password' => $this->password,
+            'pp_TxnRefNo' => $pp_TxnRefNo,
+            'pp_MobileNumber' => $orderData['mobile_number'],
+            'pp_CNIC' => $orderData['cnic_number'],
+            'pp_Amount' => $pp_Amount,
+            'pp_DiscountedAmount' => '',
+            'pp_TxnCurrency' => 'PKR',
+            'pp_TxnDateTime' => $pp_TxnDateTime,
+            'pp_BillReference' => 'billref',
+            'pp_Description' => $orderData['description'],
+            'pp_TxnExpiryDateTime' => $pp_TxnExpiryDateTime,
+            'pp_SecureHash' => '',
+            'ppmpf_1' => '',
             'ppmpf_2' => '',
             'ppmpf_3' => '',
             'ppmpf_4' => '',
@@ -70,47 +143,16 @@ class JazzCashPayment {
         return [
             'data' => $data,
             'txn_ref_no' => $pp_TxnRefNo,
-            'payment_url' => 'https://sandbox.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/'
+            'payment_url' => $this->getBaseUrl() . 'ApplicationAPI/API/2.0/Purchase/domwallettransaction'
         ];
     }
 
-    public function initiateCardPayment($orderData) {
-        $pp_TxnRefNo = 'TXN' . time() . rand(1000, 9999);
-        $pp_Amount = $orderData['amount'] * 100; // Convert to paisa
-
-        $data = [
-            'pp_Version' => '1.1',
-            'pp_TxnType' => 'CRDC',
-            'pp_Language' => 'EN',
-            'pp_MerchantID' => $this->merchantId,
-            'pp_SubMerchantID' => '',
-            'pp_Password' => $this->password,
-            'pp_BankID' => '',
-            'pp_ProductID' => '',
-            'pp_TxnRefNo' => $pp_TxnRefNo,
-            'pp_Amount' => $pp_Amount,
-            'pp_TxnCurrency' => 'PKR',
-            'pp_TxnDateTime' => date('YmdHis'),
-            'pp_BillReference' => $orderData['bill_reference'],
-            'pp_Description' => $orderData['description'],
-            'pp_TxnExpiryDateTime' => date('YmdHis', strtotime('+1 hour')),
-            'pp_ReturnURL' => $this->returnUrl,
-            'pp_SecureHash' => '',
-            'ppmpf_1' => $orderData['card_number'] ?? '',
-            'ppmpf_2' => $orderData['card_expiry'] ?? '',
-            'ppmpf_3' => $orderData['card_holder_name'] ?? '',
-            'ppmpf_4' => '',
-            'ppmpf_5' => ''
-        ];
-
-        // Generate secure hash
-        $data['pp_SecureHash'] = $this->generateHash($data);
-
-        return [
-            'data' => $data,
-            'txn_ref_no' => $pp_TxnRefNo,
-            'payment_url' => 'https://sandbox.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/'
-        ];
+    public function initiatePayment($orderData) {
+        if ($this->apiVersion === '2.0') {
+            return $this->initiatePaymentV2($orderData);
+        } else {
+            return $this->initiatePaymentV1($orderData);
+        }
     }
 
     public function verifyResponse($postData) {
@@ -127,7 +169,8 @@ class JazzCashPayment {
                 'txn_ref_no' => $postData['pp_TxnRefNo'],
                 'amount' => $postData['pp_Amount'] / 100,
                 'mobile_number' => $postData['ppmpf_1'] ?? '',
-                'payment_type' => $this->type
+                'cnic_number' => $postData['ppmpf_2'] ?? '',
+                'api_version' => $postData['pp_Version'] ?? '1.1'
             ];
         } else {
             return [
@@ -135,5 +178,9 @@ class JazzCashPayment {
                 'error' => 'Hash verification failed'
             ];
         }
+    }
+
+    public function isSuccessResponse($responseCode) {
+        return $responseCode === '000' || $responseCode === '00';
     }
 }

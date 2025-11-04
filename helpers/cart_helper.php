@@ -120,6 +120,17 @@ class CartHelper {
         }
     }
 
+    public function clearCart($userId) {
+        try {
+            $stmt = $this->conn->prepare("DELETE FROM cart WHERE user_id = ?");
+            $stmt->execute([$userId]);
+            return $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log("Clear Cart Error: " . $e->getMessage());
+            return false;
+        }
+    }
+
     // Get cart count
     public function getCartCount($user_id) {
         try {
