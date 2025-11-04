@@ -210,7 +210,7 @@ $main_image = !empty($product_images) ? $product_images[0]['image_path'] : ($pro
                                                 data-product-price="<?php echo $final_price; ?>"
                                                 data-product-image="<?php echo htmlspecialchars($main_image); ?>"
                                                 data-product-sku="<?php echo htmlspecialchars($product['sku']); ?>"
-                                                style="margin-bottom: 10px;">
+                                                style="margin-bottom: -30px;">
                                             <i class="fas fa-shopping-cart me-2"></i>Add to Cart
                                         </button>
                                         <!--<button class="btn btn-outline-dark btn-lg w-100">
@@ -429,7 +429,7 @@ $main_image = !empty($product_images) ? $product_images[0]['image_path'] : ($pro
                                                 Quick View
                                             </a>
                                             <?php if ($related['stock_quantity'] > 0): ?>
-                                                <button class="btn btn-outline-light btn-sm w-75 add-to-cart"
+                                                <button class="btn btn-dark btn-sm w-75 add-to-cart"
                                                         data-product-id="<?php echo $related['id']; ?>"
                                                         data-product-name="<?php echo htmlspecialchars($related['name']); ?>"
                                                         data-product-price="<?php echo $related_final_price; ?>"

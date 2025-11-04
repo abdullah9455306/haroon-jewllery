@@ -120,7 +120,7 @@ if (empty($sliders)) {
         <?php if (!empty($categories)): ?>
             <div class="categories-slider position-relative">
                 <div class="swiper-container" style="overflow-y: scroll; overflow: hidden">
-                    <div class="swiper-wrapper">
+                    <div class="swiper-wrapper" style="height: auto !important">
                         <?php foreach($categories as $category):
                             $category_image = !empty($category['image']) ? $category['image'] : 'assets/images/category-placeholder.jpg';
                             $category_description = !empty($category['description']) ? $category['description'] : 'Explore our beautiful ' . $category['name'] . ' collection';
@@ -225,13 +225,13 @@ if (empty($sliders)) {
                                 <?php if($product['featured']): ?>
                                     <span class="position-absolute top-0 end-0 bg-warning text-dark px-2 py-1 m-2 small">Featured</span>
                                 <?php endif; ?>
-                                <div class="card-img-overlay d-flex align-items-end justify-content-center" style="opacity: 0; transition: opacity 0.3s;">
+                                <div class="card-img-overlay d-flex align-items-end justify-content-center" style="transition: opacity 0.3s;">
                                     <div class="w-100 text-center">
                                         <a href="pages/product-detail.php?id=<?php echo $product['id']; ?>" class="btn btn-gold btn-sm w-75 mb-2">
                                             Quick View
                                         </a>
                                         <?php if($product['stock_quantity'] > 0): ?>
-                                            <button class="btn btn-outline-dark btn-sm w-75 add-to-cart"
+                                            <button class="btn btn-dark btn-sm w-75 add-to-cart"
                                                     data-product-id="<?php echo $product['id']; ?>">
                                                 Add to Cart
                                             </button>
@@ -320,7 +320,7 @@ if (empty($sliders)) {
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     width: 200px;
-    height: 250px;
+    height: auto;
 }
 
 .swiper-slide:hover {
@@ -568,10 +568,10 @@ document.addEventListener('DOMContentLoaded', function() {
         slidesPerView: 1,
         spaceBetween: 20,
         loop: true,
-        autoplay: {
-            delay: 3000,
-            disableOnInteraction: false,
-        },
+//         autoplay: {
+//             delay: 3000,
+//             disableOnInteraction: false,
+//         },
         pagination: {
             el: '.swiper-pagination',
             clickable: true,

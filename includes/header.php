@@ -292,7 +292,7 @@ if (isset($_SESSION['user_id'])) {
                 <img src="<?php echo SITE_URL; ?>/assets/images/logo.webp" style="width: 130px;"/>
             </a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" style="background-color: var(--primary-color)">
                 <span class="navbar-toggler-icon"></span>
             </button>
 

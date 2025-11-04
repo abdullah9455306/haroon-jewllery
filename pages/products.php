@@ -327,7 +327,7 @@ $priceRange = $conn->query("SELECT MIN(price) as min_price, MAX(price) as max_pr
                                                 <i class="fas fa-eye me-1"></i>Quick View
                                             </a>
                                             <?php if ($product['stock_quantity'] > 0): ?>
-                                                <button class="btn btn-outline-light btn-sm w-75 add-to-cart"
+                                                <button class="btn btn-dark btn-sm w-75 add-to-cart"
                                                         data-product-id="<?php echo $product['id']; ?>"
                                                         data-product-name="<?php echo htmlspecialchars($product['name']); ?>"
                                                         data-product-price="<?php echo $finalPrice; ?>"
