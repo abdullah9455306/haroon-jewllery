@@ -1,13 +1,44 @@
 <?php
-require_once 'config/constants.php';
-require_once 'includes/header.php';
+$pageTitle = "Checkout";
+require_once '../config/constants.php';
 
-if(empty($_SESSION['cart'])) {
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    $_SESSION['redirect_url'] = 'checkout.php';
+    header('Location: login.php');
+    exit;
+}
+
+// Check if cart is empty
+$cartIsEmpty = true;
+if (isset($_SESSION['user_id'])) {
+    // For logged-in users, check database cart
+    require_once '../config/database.php';
+    require_once '../helpers/cart_helper.php';
+
+    $db = new Database();
+    $conn = $db->getConnection();
+    $cartHelper = new CartHelper();
+
+    $cartItems = $cartHelper->getCartItems($_SESSION['user_id']);
+    $cartIsEmpty = empty($cartItems);
+} else {
+    // For guest users, check session cart
+    $cartIsEmpty = empty($_SESSION['cart']);
+}
+
+// Redirect to cart if empty
+if ($cartIsEmpty) {
     header('Location: cart.php');
     exit;
 }
 
-$pageTitle = "Checkout";
+require_once '../includes/header.php';
 ?>
 
 <div class="container py-5">
@@ -24,11 +55,13 @@ $pageTitle = "Checkout";
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="fullName" class="form-label">Full Name *</label>
-                                <input type="text" class="form-control" id="fullName" name="fullName" required>
+                                <input type="text" class="form-control" id="fullName" name="fullName" required
+                                       value="<?php echo isset($_SESSION['user_name']) ? htmlspecialchars($_SESSION['user_name']) : ''; ?>">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="email" class="form-label">Email *</label>
-                                <input type="email" class="form-control" id="email" name="email" required>
+                                <input type="email" class="form-control" id="email" name="email" required
+                                       value="<?php echo isset($_SESSION['user_email']) ? htmlspecialchars($_SESSION['user_email']) : ''; ?>">
                             </div>
                         </div>
                         <div class="row">
@@ -61,16 +94,16 @@ $pageTitle = "Checkout";
                             </label>
                         </div>
 
-                        <div class="form-check mb-3">
+                        <!--<div class="form-check mb-3">
                             <input class="form-check-input" type="radio" name="paymentMethod" id="jazzcash_card" value="jazzcash_card">
                             <label class="form-check-label" for="jazzcash_card">
                                 <i class="fas fa-credit-card me-2"></i>Debit/Credit Card (JazzCash)
                                 <small class="d-block text-muted">Pay using your debit or credit card</small>
                             </label>
-                        </div>
+                        </div>-->
 
                         <!-- Card Details (Hidden by default) -->
-                        <div id="cardDetails" class="border rounded p-3 mt-3" style="display: none;">
+                        <!--<div id="cardDetails" class="border rounded p-3 mt-3" style="display: none;">
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="cardNumber" class="form-label">Card Number</label>
@@ -97,7 +130,7 @@ $pageTitle = "Checkout";
                                 <i class="fas fa-money-bill-wave me-2"></i>Cash on Delivery
                                 <small class="d-block text-muted">Pay when you receive your order</small>
                             </label>
-                        </div>
+                        </div>-->
                     </div>
                 </div>
 
@@ -113,12 +146,21 @@ $pageTitle = "Checkout";
                 <div class="card-body">
                     <?php
                     $subtotal = 0;
-                    foreach($_SESSION['cart'] as $item):
+                    $cartItems = [];
+
+                    // Get cart items based on user type
+                    if (isset($_SESSION['user_id'])) {
+                        $cartItems = $cartHelper->getCartItems($_SESSION['user_id']);
+                    } else {
+                        $cartItems = $_SESSION['cart'] ?? [];
+                    }
+
+                    foreach($cartItems as $item):
                         $item_total = $item['price'] * $item['quantity'];
                         $subtotal += $item_total;
                     ?>
                         <div class="d-flex justify-content-between mb-2">
-                            <span><?php echo $item['name']; ?> x <?php echo $item['quantity']; ?></span>
+                            <span><?php echo htmlspecialchars($item['name']); ?> x <?php echo $item['quantity']; ?></span>
                             <span><?php echo CURRENCY . ' ' . number_format($item_total); ?></span>
                         </div>
                     <?php endforeach; ?>
@@ -143,6 +185,19 @@ $pageTitle = "Checkout";
                     </div>
                 </div>
             </div>
+
+            <!-- Security Notice -->
+            <div class="card mt-3 border-success">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-shield-alt text-warning me-2 fs-5"></i>
+                        <div>
+                            <h6 class="mb-1 text-success">Secure Checkout</h6>
+                            <small class="text-muted">Your personal information is protected</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -156,12 +211,54 @@ document.addEventListener('DOMContentLoaded', function() {
         method.addEventListener('change', function() {
             if (this.value === 'jazzcash_card') {
                 cardDetails.style.display = 'block';
+                // Make card fields required when card payment is selected
+                document.getElementById('cardNumber').required = true;
+                document.getElementById('cardExpiry').required = true;
+                document.getElementById('cardCVC').required = true;
+                document.getElementById('cardHolderName').required = true;
             } else {
                 cardDetails.style.display = 'none';
+                // Remove required attribute when other payment methods are selected
+                document.getElementById('cardNumber').required = false;
+                document.getElementById('cardExpiry').required = false;
+                document.getElementById('cardCVC').required = false;
+                document.getElementById('cardHolderName').required = false;
             }
         });
+    });
+
+    // Form validation
+    const checkoutForm = document.getElementById('checkoutForm');
+    checkoutForm.addEventListener('submit', function(e) {
+        let isValid = true;
+        const requiredFields = checkoutForm.querySelectorAll('[required]');
+
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.classList.add('is-invalid');
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
     });
 });
 </script>
 
-<?php require_once 'includes/footer.php'; ?>
+<style>
+.is-invalid {
+    border-color: #dc3545;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+</style>
+
+<?php require_once '../includes/footer.php'; ?>

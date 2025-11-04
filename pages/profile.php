@@ -29,7 +29,7 @@ if ($user_stmt->execute([$user_id])) {
 // If user not found, redirect to login
 if (!$user) {
     echo '<script>window.location.href = "login.php";</script>';
-        exit;
+    exit;
 }
 
 // Get user orders
