@@ -4,7 +4,7 @@ require_once '../config/constants.php';
 
 // Redirect to login if not authenticated as admin
 if (!isset($_SESSION['admin_logged_in'])) {
-    header('Location: login.php');
+    header('Location: index.php');
     exit;
 }
 

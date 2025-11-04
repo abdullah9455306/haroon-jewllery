@@ -3,6 +3,12 @@ require_once '../config/constants.php';
 require_once '../config/database.php';
 require_once 'jazzcash-payment.php';
 
+
+define('DB_HOST', 'sql311.infinityfree.com');
+define('DB_NAME', 'if0_40317799_haroon_jewellery');
+define('DB_USER', 'if0_40317799');
+define('DB_PASS', 'Ny7eUO0z2vbqZP');
+
 session_start();
 
 try {

@@ -8,7 +8,7 @@ $conn = $db->getConnection();
 
 // Check admin permissions
 if (!isset($_SESSION['admin_logged_in']) || ($_SESSION['admin_role'] !== 'admin' && !$_SESSION['is_super_admin'])) {
-    header('Location: login.php');
+    header('Location: index.php');
     exit;
 }
 

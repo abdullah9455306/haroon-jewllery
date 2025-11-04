@@ -10,6 +10,6 @@ unset($_SESSION['admin_role']);
 unset($_SESSION['is_super_admin']);
 
 // Redirect to admin login page
-header('Location: login.php');
+header('Location: index.php');
 exit;
 ?>

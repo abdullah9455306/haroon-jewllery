@@ -14,7 +14,7 @@ $admin_stmt->execute([$admin_id]);
 $admin = $admin_stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$admin) {
-    header('Location: login.php');
+    header('Location: index.php');
     exit;
 }
 
