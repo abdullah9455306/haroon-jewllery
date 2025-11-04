@@ -4,6 +4,11 @@ require_once '../config/database.php';
 require_once '../helpers/cart_helper.php';
 require_once '../api/jazzcash-payment.php';
 
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     $_SESSION['error'] = 'Please login to complete your order.';
@@ -14,6 +19,70 @@ if (!isset($_SESSION['user_id'])) {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: checkout.php');
     exit;
+}
+
+// Function to process payment response
+function processPaymentResponse($postData, $orderId, $conn) {
+    $jazzcash = new JazzCashPayment();
+
+    try {
+        // Verify JazzCash response
+        $response = $jazzcash->verifyResponse($postData);
+
+        if (!$response['success']) {
+            throw new Exception('Invalid payment response: ' . $response['error']);
+        }
+
+        // Update transaction status
+        $updateTransactionQuery = "UPDATE jazzcash_transactions SET
+            pp_ResponseCode = ?,
+            pp_ResponseMessage = ?,
+            status = ?,
+            updated_at = NOW()
+            WHERE pp_TxnRefNo = ?";
+
+        $transactionStatus = $jazzcash->isSuccessResponse($response['response_code']) ? 'completed' : 'failed';
+        $updateTransactionStmt = $conn->prepare($updateTransactionQuery);
+        $updateTransactionStmt->execute([
+            $response['response_code'],
+            $response['response_message'],
+            $transactionStatus,
+            $response['txn_ref_no']
+        ]);
+
+        // Update order status - REMOVED jazzcash_transaction_ref column
+        $orderStatus = $jazzcash->isSuccessResponse($response['response_code']) ? 'processing' : 'pending';
+        $paymentStatus = $jazzcash->isSuccessResponse($response['response_code']) ? 'paid' : 'failed';
+
+        $updateOrderQuery = "UPDATE orders SET
+            payment_status = ?,
+            order_status = ?,
+            jazzcash_mobile_number = ?,
+            updated_at = NOW()
+            WHERE id = ?";
+
+        $updateOrderStmt = $conn->prepare($updateOrderQuery);
+        $updateOrderStmt->execute([
+            $paymentStatus,
+            $orderStatus,
+            $response['mobile_number'],
+            $orderId
+        ]);
+
+        return [
+            'success' => $jazzcash->isSuccessResponse($response['response_code']),
+            'message' => $response['response_message'],
+            'order_id' => $orderId,
+            'transaction_ref' => $response['txn_ref_no']
+        ];
+
+    } catch (Exception $e) {
+        error_log('Payment Processing Error: ' . $e->getMessage());
+        return [
+            'success' => false,
+            'message' => $e->getMessage()
+        ];
+    }
 }
 
 try {
@@ -55,12 +124,12 @@ try {
         throw new Exception('All required fields must be filled.');
     }
 
-    // Validate mobile format (updated pattern - no dashes)
+    // Validate mobile format
     if (!preg_match('/^03[0-9]{9}$/', $jazzcashMobile)) {
         throw new Exception('Please enter a valid JazzCash mobile number (03XXXXXXXXX).');
     }
 
-    // Validate CNIC for v2.0 (updated pattern - 6 digits maximum)
+    // Validate CNIC for v2.0
     if ($apiVersion === '2.0' && empty($jazzcashCnic)) {
         throw new Exception('CNIC number is required for JazzCash v2.0.');
     }
@@ -119,7 +188,6 @@ try {
     // Prepare JazzCash payment data
     $paymentData = [
         'amount' => $total,
-        'bill_reference' => $orderNumber,
         'description' => 'Payment for Order #' . $orderNumber,
         'mobile_number' => $jazzcashMobile
     ];
@@ -156,32 +224,26 @@ try {
     // Commit transaction
     $conn->commit();
 
-    // Store order ID in session for callback
-    $_SESSION['current_order_id'] = $orderId;
+    // Call JazzCash API and process response
+    $make_call = $jazzcash->callAPI($paymentInit);
+    $make_call = json_decode($make_call, true);
+    // Process the payment response
+    if (isset($make_call['pp_ResponseCode'])) {
+        $paymentResult = processPaymentResponse($make_call, $orderId, $conn);
 
-    // Create auto-submit form for JazzCash
-    echo '<!DOCTYPE html>
-    <html>
-    <head>
-        <title>Redirecting to JazzCash...</title>
-    </head>
-    <body>
-        <form id="jazzcashForm" action="' . $paymentInit['payment_url'] . '" method="POST">';
-
-    foreach ($paymentInit['data'] as $key => $value) {
-        echo '<input type="hidden" name="' . htmlspecialchars($key) . '" value="' . htmlspecialchars($value) . '">';
+        if ($paymentResult['success']) {
+            $_SESSION['success'] = 'Payment completed successfully! Your order is being processed.';
+            header('Location: order-success.php?order_id=' . $orderId);
+        } else {
+            $_SESSION['error'] = 'Payment failed: ' . $paymentResult['message'];
+            header('Location: order-failed.php?order_id=' . $orderId);
+        }
+        exit;
+    } else {
+        $_SESSION['error'] = 'No response received from payment gateway.';
+        header('Location: checkout.php');
+        exit;
     }
-
-    echo '</form>
-        <script>
-            document.getElementById("jazzcashForm").submit();
-        </script>
-        <div style="text-align: center; margin-top: 50px;">
-            <h3>Redirecting to JazzCash Payment Gateway...</h3>
-            <p>Please wait while we redirect you to the secure payment page.</p>
-        </div>
-    </body>
-    </html>';
 
 } catch (Exception $e) {
     // Rollback transaction on error

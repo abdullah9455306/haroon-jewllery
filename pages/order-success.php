@@ -27,7 +27,7 @@ $db = new Database();
 $conn = $db->getConnection();
 
 // Fetch order details
-$orderQuery = "SELECT o.*, jt.pp_ResponseMessage, jt.pp_TxnRefNo
+$orderQuery = "SELECT o.*, jt.pp_ResponseMessage, jt.pp_TxnRefNo, jt.pp_MobileNumber
                FROM orders o
                LEFT JOIN jazzcash_transactions jt ON o.id = jt.order_id
                WHERE o.id = ? AND o.user_id = ?";
@@ -80,7 +80,7 @@ require_once '../includes/header.php';
                             <h6>Payment Information</h6>
                             <p class="mb-1"><strong>Transaction ID:</strong> <?php echo htmlspecialchars($order['pp_TxnRefNo'] ?? 'N/A'); ?></p>
                             <p class="mb-1"><strong>Payment Method:</strong> JazzCash Mobile</p>
-                            <p class="mb-1"><strong>Mobile Number:</strong> <?php echo htmlspecialchars($order['jazzcash_mobile_number'] ?? 'N/A'); ?></p>
+                            <p class="mb-1"><strong>Mobile Number:</strong> <?php echo htmlspecialchars($order['pp_MobileNumber'] ?? 'N/A'); ?></p>
                             <p class="mb-0"><strong>Message:</strong> <?php echo htmlspecialchars($order['pp_ResponseMessage'] ?? 'Payment completed successfully'); ?></p>
                         </div>
                     </div>
@@ -210,7 +210,7 @@ require_once '../includes/header.php';
                     <i class="fas fa-question-circle me-3 fs-4"></i>
                     <div>
                         <h6 class="mb-1">Need Help?</h6>
-                        <p class="mb-0">If you have any questions about your order, please contact our customer support at <strong>support@haroonjewellery.com</strong> or call us at <strong>+92 300 1234567</strong>.</p>
+                        <p class="mb-0">If you have any questions about your order, please contact our customer support at <strong>info@haroonjewellery.com</strong> or call us at <strong>0306-0000905, 0323-1441230</strong>.</p>
                     </div>
                 </div>
             </div>

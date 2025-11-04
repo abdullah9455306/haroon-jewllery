@@ -155,13 +155,43 @@ class JazzCashPayment {
         }
     }
 
+public function callAPI($allData) {
+    $curl = curl_init();
+
+    // JazzCash expects form data, not JSON - use http_build_query instead of json_encode
+    $data = http_build_query($allData['data']);
+    $postUrl = $allData['payment_url'];
+
+    curl_setopt_array($curl, [
+        CURLOPT_URL => $postUrl,
+        CURLOPT_POST => 1,
+        CURLOPT_POSTFIELDS => $data,
+        CURLOPT_RETURNTRANSFER => 1,
+        CURLOPT_FOLLOWLOCATION => 0,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/x-www-form-urlencoded'
+        ]
+    ]);
+
+    // EXECUTE
+    $result = curl_exec($curl);
+    $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    $error = curl_error($curl);
+
+    curl_close($curl);
+
+    if (!$result) {
+        throw new Exception("API Connection Failure: " . $error);
+    }
+
+    return $result;
+}
+
     public function verifyResponse($postData) {
-        $responseHash = $postData['pp_SecureHash'];
-        unset($postData['pp_SecureHash']);
-
-        $calculatedHash = $this->generateHash($postData);
-
-        if($responseHash === $calculatedHash) {
+        if($postData['pp_ResponseCode'] === '000') {
             return [
                 'success' => true,
                 'response_code' => $postData['pp_ResponseCode'],
@@ -175,7 +205,14 @@ class JazzCashPayment {
         } else {
             return [
                 'success' => false,
-                'error' => 'Hash verification failed'
+                'response_code' => $postData['pp_ResponseCode'],
+                'response_message' => $postData['pp_ResponseMessage'],
+                'error' => $postData['pp_ResponseMessage'],
+                'txn_ref_no' => $postData['pp_TxnRefNo'],
+                'amount' => $postData['pp_Amount'] / 100,
+                'mobile_number' => $postData['ppmpf_1'] ?? '',
+                'cnic_number' => $postData['ppmpf_2'] ?? '',
+                'api_version' => $postData['pp_Version'] ?? '1.1'
             ];
         }
     }

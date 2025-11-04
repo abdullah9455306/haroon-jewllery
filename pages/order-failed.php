@@ -191,10 +191,10 @@ $failureReason = $failureReasons[$errorCode] ?? $failureReasons['999'];
                         <p class="mb-2">If you continue to experience issues, our support team is here to help:</p>
                         <div class="row">
                             <div class="col-md-6">
-                                <p class="mb-1"><i class="fas fa-envelope me-2"></i><strong>Email:</strong> support@haroonjewellery.com</p>
+                                <p class="mb-1"><i class="fas fa-envelope me-2"></i><strong>Email:</strong> info@haroonjewellery.com</p>
                             </div>
                             <div class="col-md-6">
-                                <p class="mb-1"><i class="fas fa-phone me-2"></i><strong>Phone:</strong> +92 300 1234567</p>
+                                <p class="mb-1"><i class="fas fa-phone me-2"></i><strong>Phone:</strong> 0306-0000905, 0323-1441230</p>
                             </div>
                         </div>
                         <p class="mb-0 mt-2"><small>Please mention your order number: <strong><?php echo htmlspecialchars($order['order_number']); ?></strong></small></p>
