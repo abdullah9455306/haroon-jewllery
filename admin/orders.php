@@ -63,67 +63,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_order'])) {
     }
 }
 
-// Handle view order details
-$view_order = null;
-$order_items = [];
-$payment_details = null;
-
-if (isset($_GET['action']) && $_GET['action'] === 'view' && isset($_GET['id'])) {
-    $order_id = intval($_GET['id']);
-
-    try {
-        // Get order details
-        $sql = "SELECT o.*, u.name as user_name, u.email as user_email
-                FROM orders o
-                LEFT JOIN users u ON o.user_id = u.id
-                WHERE o.id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([$order_id]);
-        $view_order = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($view_order) {
-            // Get order items
-            $items_sql = "SELECT oi.*, p.name as product_name, p.sku, p.image
-                          FROM order_items oi
-                          LEFT JOIN products p ON oi.product_id = p.id
-                          WHERE oi.order_id = ?";
-            $items_stmt = $conn->prepare($items_sql);
-            $items_stmt->execute([$order_id]);
-            $order_items = $items_stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            // Get payment details based on payment method
-            if ($view_order['payment_method'] === 'jazzcash_mobile' || $view_order['payment_method'] === 'jazzcash_card') {
-                $payment_sql = "SELECT * FROM jazzcash_transactions WHERE order_id = ?";
-                $payment_stmt = $conn->prepare($payment_sql);
-                $payment_stmt->execute([$order_id]);
-                $payment_details = $payment_stmt->fetch(PDO::FETCH_ASSOC);
-            } elseif ($view_order['payment_method'] === 'bank') {
-                $payment_sql = "SELECT * FROM bank_transfers WHERE order_id = ?";
-                $payment_stmt = $conn->prepare($payment_sql);
-                $payment_stmt->execute([$order_id]);
-                $payment_details = $payment_stmt->fetch(PDO::FETCH_ASSOC);
-            }
-        }
-    } catch (PDOException $e) {
-        $error_message = "Error loading order details: " . $e->getMessage();
-    }
-}
-
-// Handle edit order status
-$edit_order = null;
-if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['id'])) {
-    $order_id = intval($_GET['id']);
-
-    try {
-        $sql = "SELECT * FROM orders WHERE id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([$order_id]);
-        $edit_order = $stmt->fetch(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        $error_message = "Error loading order: " . $e->getMessage();
-    }
-}
-
 // Get filter parameters
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $order_status = isset($_GET['order_status']) ? $_GET['order_status'] : '';
@@ -231,26 +170,23 @@ $today_stats = $today_stmt->fetch(PDO::FETCH_ASSOC);
             <p class="text-muted mb-0">Manage customer orders and track order status</p>
         </div>
         <div>
-            <!--<button type="button" class="btn btn-outline-secondary me-2" onclick="window.print()">
-                   <i class="fas fa-print me-2"></i>Print Report
-               </button>-->
-               <div class="btn-group">
-                   <button type="button" class="btn btn-gold dropdown-toggle" data-bs-toggle="dropdown">
-                       <i class="fas fa-download me-2"></i>Export Orders
-                   </button>
-                   <ul class="dropdown-menu">
-                       <li><a class="dropdown-item" href="orders-export.php?<?php echo http_build_query($_GET); ?>">
-                           <i class="fas fa-file-csv me-2"></i>Export Summary CSV
-                       </a></li>
-                       <li><a class="dropdown-item" href="orders-export-detailed.php?<?php echo http_build_query($_GET); ?>">
-                           <i class="fas fa-file-alt me-2"></i>Export Detailed CSV
-                       </a></li>
-                       <li><hr class="dropdown-divider"></li>
-                       <li><a class="dropdown-item" href="orders-export.php?export_type=all">
-                           <i class="fas fa-database me-2"></i>Export All Orders
-                       </a></li>
-                   </ul>
-               </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-gold dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-download me-2"></i>Export Orders
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="orders-export.php?<?php echo http_build_query($_GET); ?>">
+                        <i class="fas fa-file-csv me-2"></i>Export Summary CSV
+                    </a></li>
+                    <li><a class="dropdown-item" href="orders-export-detailed.php?<?php echo http_build_query($_GET); ?>">
+                        <i class="fas fa-file-alt me-2"></i>Export Detailed CSV
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="orders-export.php?export_type=all">
+                        <i class="fas fa-database me-2"></i>Export All Orders
+                    </a></li>
+                </ul>
+            </div>
         </div>
     </div>
 
@@ -510,16 +446,28 @@ $today_stats = $today_stmt->fetch(PDO::FETCH_ASSOC);
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
-                                            <a href="?action=view&id=<?php echo $order['id']; ?><?php echo !empty($_GET) ? '&' . http_build_query($_GET) : ''; ?>"
-                                               class="btn btn-outline-primary"
-                                               title="View Details">
+                                            <button type="button"
+                                                    class="btn btn-outline-secondary view-order-btn"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#viewOrderModal"
+                                                    data-order-id="<?php echo $order['id']; ?>"
+                                                    data-order-number="<?php echo htmlspecialchars($order['order_number']); ?>"
+                                                    title="View Details">
                                                 <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="?action=edit&id=<?php echo $order['id']; ?><?php echo !empty($_GET) ? '&' . http_build_query($_GET) : ''; ?>"
-                                               class="btn btn-outline-info"
-                                               title="Update Status">
+                                            </button>
+                                            <button type="button"
+                                                    class="btn btn-outline-primary edit-order-btn"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#editOrderModal"
+                                                    data-order-id="<?php echo $order['id']; ?>"
+                                                    data-order-number="<?php echo htmlspecialchars($order['order_number']); ?>"
+                                                    data-customer-name="<?php echo htmlspecialchars($order['customer_name']); ?>"
+                                                    data-order-status="<?php echo $order['order_status']; ?>"
+                                                    data-payment-status="<?php echo $order['payment_status']; ?>"
+                                                    data-notes="<?php echo htmlspecialchars($order['notes'] ?? ''); ?>"
+                                                    title="Update Status">
                                                 <i class="fas fa-edit"></i>
-                                            </a>
+                                            </button>
                                             <button type="button"
                                                     class="btn btn-outline-danger delete-order-btn"
                                                     data-order-id="<?php echo $order['id']; ?>"
@@ -589,6 +537,101 @@ $today_stats = $today_stmt->fetch(PDO::FETCH_ASSOC);
     </div>
 </div>
 
+<!-- View Order Modal -->
+<div class="modal fade" id="viewOrderModal" tabindex="-1" aria-labelledby="viewOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewOrderModalLabel">Order Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-gold" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading order details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-gold" onclick="printOrder()">
+                    <i class="fas fa-print me-2"></i>Print Invoice
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Order Modal -->
+<div class="modal fade" id="editOrderModal" tabindex="-1" aria-labelledby="editOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editOrderModalLabel">Update Order Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="" id="editOrderForm">
+                <div class="modal-body">
+                    <input type="hidden" name="update_order_status" value="1">
+                    <input type="hidden" name="order_id" id="edit_order_id">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_order_status" class="form-label">Order Status</label>
+                                <select class="form-select" id="edit_order_status" name="order_status" required>
+                                    <option value="pending">Pending</option>
+                                    <option value="processing">Processing</option>
+                                    <option value="shipped">Shipped</option>
+                                    <option value="delivered">Delivered</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_payment_status" class="form-label">Payment Status</label>
+                                <select class="form-select" id="edit_payment_status" name="payment_status" required>
+                                    <option value="pending">Pending</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="failed">Failed</option>
+                                    <option value="refunded">Refunded</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_notes" class="form-label">Admin Notes</label>
+                        <textarea class="form-control" id="edit_notes" name="notes" rows="3" placeholder="Add any notes about this order..."></textarea>
+                    </div>
+
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">Order Information</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-muted">Order #:</small>
+                                    <div id="edit_order_number_display" class="fw-bold">-</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted">Customer:</small>
+                                    <div id="edit_customer_name_display" class="fw-bold">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-gold">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Delete Order Modal -->
 <div class="modal fade" id="deleteOrderModal" tabindex="-1" aria-labelledby="deleteOrderModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -634,238 +677,6 @@ $today_stats = $today_stmt->fetch(PDO::FETCH_ASSOC);
         </div>
     </div>
 </div>
-
-<!-- Order Details Section (shown when viewing order) -->
-<?php if (isset($_GET['action']) && $_GET['action'] === 'view' && $view_order): ?>
-<div class="container-fluid py-4">
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Order Details - <?php echo htmlspecialchars($view_order['order_number']); ?></h5>
-            <a href="orders.php?<?php echo http_build_query($_GET); ?>" class="btn btn-secondary btn-sm">
-                <i class="fas fa-arrow-left me-1"></i>Back to Orders
-            </a>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <!-- Order Summary -->
-                <div class="col-md-6">
-                    <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0"><i class="fas fa-receipt me-2"></i>Order Summary</h6>
-                        </div>
-                        <div class="card-body">
-                            <table class="table table-sm table-borderless">
-                                <tr>
-                                    <td><strong>Order Number:</strong></td>
-                                    <td><?php echo htmlspecialchars($view_order['order_number']); ?></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Order Date:</strong></td>
-                                    <td><?php echo date('F j, Y g:i A', strtotime($view_order['created_at'])); ?></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Order Status:</strong></td>
-                                    <td>
-                                        <?php
-                                        $status_badges = [
-                                            'pending' => 'bg-warning',
-                                            'processing' => 'bg-info',
-                                            'shipped' => 'bg-primary',
-                                            'delivered' => 'bg-success',
-                                            'cancelled' => 'bg-danger'
-                                        ];
-                                        $badge_class = $status_badges[$view_order['order_status']] ?? 'bg-secondary';
-                                        ?>
-                                        <span class="badge <?php echo $badge_class; ?>"><?php echo ucfirst($view_order['order_status']); ?></span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Payment Status:</strong></td>
-                                    <td>
-                                        <?php
-                                        $payment_status_badges = [
-                                            'pending' => 'bg-warning',
-                                            'paid' => 'bg-success',
-                                            'failed' => 'bg-danger',
-                                            'refunded' => 'bg-info'
-                                        ];
-                                        $payment_badge_class = $payment_status_badges[$view_order['payment_status']] ?? 'bg-secondary';
-                                        ?>
-                                        <span class="badge <?php echo $payment_badge_class; ?>"><?php echo ucfirst($view_order['payment_status']); ?></span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Payment Method:</strong></td>
-                                    <td><?php echo ucfirst(str_replace('_', ' ', $view_order['payment_method'])); ?></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Subtotal:</strong></td>
-                                    <td><?php echo CURRENCY . ' ' . number_format($view_order['subtotal'], 2); ?></td>
-                                </tr>
-                                <?php if ($view_order['shipping'] > 0): ?>
-                                <tr>
-                                    <td><strong>Shipping:</strong></td>
-                                    <td><?php echo CURRENCY . ' ' . number_format($view_order['shipping'], 2); ?></td>
-                                </tr>
-                                <?php endif; ?>
-                                <tr>
-                                    <td><strong>Total Amount:</strong></td>
-                                    <td><strong><?php echo CURRENCY . ' ' . number_format($view_order['total_amount'], 2); ?></strong></td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Customer Information -->
-                <div class="col-md-6">
-                    <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0"><i class="fas fa-user me-2"></i>Customer Information</h6>
-                        </div>
-                        <div class="card-body">
-                            <table class="table table-sm table-borderless">
-                                <tr>
-                                    <td><strong>Name:</strong></td>
-                                    <td><?php echo htmlspecialchars($view_order['customer_name']); ?></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Email:</strong></td>
-                                    <td><?php echo htmlspecialchars($view_order['customer_email']); ?></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Mobile:</strong></td>
-                                    <td><?php echo htmlspecialchars($view_order['customer_mobile']); ?></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>User Type:</strong></td>
-                                    <td>
-                                        <?php if ($view_order['user_id']): ?>
-                                            <span class="badge bg-success">Registered User</span>
-                                            <?php if ($view_order['user_name']): ?>
-                                                <br><small><?php echo htmlspecialchars($view_order['user_name']); ?></small>
-                                            <?php endif; ?>
-                                        <?php else: ?>
-                                            <span class="badge bg-secondary">Guest Checkout</span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Order Items -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="fas fa-shopping-bag me-2"></i>Order Items (<?php echo count($order_items); ?>)</h6>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Product</th>
-                                    <th>SKU</th>
-                                    <th>Price</th>
-                                    <th>Quantity</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($order_items as $item): ?>
-                                <tr>
-                                    <td>
-                                        <strong><?php echo htmlspecialchars($item['product_name']); ?></strong>
-                                        <?php if (!empty($item['variant'])): ?>
-                                            <br><small class="text-muted">Variant: <?php echo htmlspecialchars($item['variant']); ?></small>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td><?php echo htmlspecialchars($item['sku'] ?? 'N/A'); ?></td>
-                                    <td><?php echo CURRENCY . ' ' . number_format($item['price'], 2); ?></td>
-                                    <td><?php echo $item['quantity']; ?></td>
-                                    <td><strong><?php echo CURRENCY . ' ' . number_format($item['price'] * $item['quantity'], 2); ?></strong></td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Shipping Address -->
-            <?php if (!empty($view_order['shipping_address'])): ?>
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="fas fa-truck me-2"></i>Shipping Address</h6>
-                </div>
-                <div class="card-body">
-                    <pre style="font-family: inherit; white-space: pre-wrap;"><?php echo htmlspecialchars($view_order['shipping_address']); ?></pre>
-                </div>
-            </div>
-            <?php endif; ?>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
-
-<!-- Edit Order Status Section (shown when editing order) -->
-<?php if (isset($_GET['action']) && $_GET['action'] === 'edit' && $edit_order): ?>
-<div class="container-fluid py-4">
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Update Order Status - <?php echo htmlspecialchars($edit_order['order_number']); ?></h5>
-            <a href="orders.php?<?php echo http_build_query($_GET); ?>" class="btn btn-secondary btn-sm">
-                <i class="fas fa-arrow-left me-1"></i>Back to Orders
-            </a>
-        </div>
-        <div class="card-body">
-            <form method="POST" action="orders.php?<?php echo http_build_query($_GET); ?>">
-                <input type="hidden" name="update_order_status" value="1">
-                <input type="hidden" name="order_id" value="<?php echo $edit_order['id']; ?>">
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="order_status" class="form-label">Order Status</label>
-                            <select class="form-select" id="order_status" name="order_status" required>
-                                <option value="pending" <?php echo $edit_order['order_status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                <option value="processing" <?php echo $edit_order['order_status'] === 'processing' ? 'selected' : ''; ?>>Processing</option>
-                                <option value="shipped" <?php echo $edit_order['order_status'] === 'shipped' ? 'selected' : ''; ?>>Shipped</option>
-                                <option value="delivered" <?php echo $edit_order['order_status'] === 'delivered' ? 'selected' : ''; ?>>Delivered</option>
-                                <option value="cancelled" <?php echo $edit_order['order_status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="payment_status" class="form-label">Payment Status</label>
-                            <select class="form-select" id="payment_status" name="payment_status" required>
-                                <option value="pending" <?php echo $edit_order['payment_status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                <option value="paid" <?php echo $edit_order['payment_status'] === 'paid' ? 'selected' : ''; ?>>Paid</option>
-                                <option value="failed" <?php echo $edit_order['payment_status'] === 'failed' ? 'selected' : ''; ?>>Failed</option>
-                                <option value="refunded" <?php echo $edit_order['payment_status'] === 'refunded' ? 'selected' : ''; ?>>Refunded</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label for="notes" class="form-label">Admin Notes</label>
-                    <textarea class="form-control" id="notes" name="notes" rows="3"
-                              placeholder="Add any notes about this order..."><?php echo htmlspecialchars($edit_order['notes'] ?? ''); ?></textarea>
-                </div>
-
-                <div class="d-flex justify-content-between">
-                    <a href="orders.php?<?php echo http_build_query($_GET); ?>" class="btn btn-secondary">Cancel</a>
-                    <button type="submit" class="btn btn-gold">Update Status</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
 
 <style>
 .card {
@@ -916,18 +727,6 @@ $today_stats = $today_stmt->fetch(PDO::FETCH_ASSOC);
         margin-bottom: 1rem;
     }
 }
-
-/* Print styles */
-@media print {
-    .sidebar, .admin-header, .btn, .pagination, .modal-footer .btn-secondary {
-        display: none !important;
-    }
-
-    .col-md-9 {
-        flex: 0 0 100%;
-        max-width: 100%;
-    }
-}
 </style>
 
 <script>
@@ -954,6 +753,31 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 500);
         });
     }
+
+    // View order functionality
+    const viewOrderBtns = document.querySelectorAll('.view-order-btn');
+    viewOrderBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.getAttribute('data-order-id');
+            const orderNumber = this.getAttribute('data-order-number');
+            loadOrderDetails(orderId, orderNumber);
+        });
+    });
+
+    // Edit order functionality
+    const editOrderBtns = document.querySelectorAll('.edit-order-btn');
+    editOrderBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.getAttribute('data-order-id');
+            const orderNumber = this.getAttribute('data-order-number');
+            const customerName = this.getAttribute('data-customer-name');
+            const orderStatus = this.getAttribute('data-order-status');
+            const paymentStatus = this.getAttribute('data-payment-status');
+            const notes = this.getAttribute('data-notes');
+
+            loadOrderForEdit(orderId, orderNumber, customerName, orderStatus, paymentStatus, notes);
+        });
+    });
 
     // Delete order modal functionality
     const deleteOrderModal = new bootstrap.Modal(document.getElementById('deleteOrderModal'));
@@ -986,7 +810,109 @@ document.addEventListener('DOMContentLoaded', function() {
             deleteBtn.disabled = true;
         });
     }
+
+    // Reset modals when closed
+    const viewOrderModal = document.getElementById('viewOrderModal');
+    const editOrderModal = document.getElementById('editOrderModal');
+
+    if (viewOrderModal) {
+        viewOrderModal.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('viewOrderModalLabel').textContent = 'Order Details';
+            document.querySelector('#viewOrderModal .modal-body').innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-gold" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading order details...</p>
+                </div>
+            `;
+        });
+    }
+
+    if (editOrderModal) {
+        editOrderModal.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('editOrderModalLabel').textContent = 'Update Order Status';
+            document.getElementById('edit_order_id').value = '';
+            document.getElementById('edit_order_status').value = 'pending';
+            document.getElementById('edit_payment_status').value = 'pending';
+            document.getElementById('edit_notes').value = '';
+            document.getElementById('edit_order_number_display').textContent = '-';
+            document.getElementById('edit_customer_name_display').textContent = '-';
+        });
+    }
 });
+
+// Load order details for viewing
+function loadOrderDetails(orderId, orderNumber) {
+    document.getElementById('viewOrderModalLabel').textContent = `Order Details - ${orderNumber}`;
+
+    // Show loading state
+    document.querySelector('#viewOrderModal .modal-body').innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-gold" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading order details...</p>
+        </div>
+    `;
+
+    // In a real implementation, you would make an AJAX call here
+    // For now, we'll just show a message since we don't have the full order details
+    setTimeout(() => {
+        document.querySelector('#viewOrderModal .modal-body').innerHTML = `
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle me-2"></i>
+                Order details would be loaded here for order #${orderNumber} (ID: ${orderId})
+                <br><small>In a real implementation, this would fetch complete order details from the server.</small>
+            </div>
+        `;
+    }, 1000);
+}
+
+// Load order data for editing
+function loadOrderForEdit(orderId, orderNumber, customerName, orderStatus, paymentStatus, notes) {
+    document.getElementById('editOrderModalLabel').textContent = `Update Order Status - ${orderNumber}`;
+    document.getElementById('edit_order_id').value = orderId;
+    document.getElementById('edit_order_status').value = orderStatus;
+    document.getElementById('edit_payment_status').value = paymentStatus;
+    document.getElementById('edit_notes').value = notes;
+    document.getElementById('edit_order_number_display').textContent = orderNumber;
+    document.getElementById('edit_customer_name_display').textContent = customerName;
+}
+
+// Print order function
+function printOrder() {
+    const orderContent = document.querySelector('#viewOrderModal .modal-body').innerHTML;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Order Invoice</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+            <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+            <style>
+                body { font-family: Arial, sans-serif; }
+                .text-gold { color: #d4af37 !important; }
+                @media print {
+                    .no-print { display: none !important; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container-fluid py-4">
+                ${orderContent}
+            </div>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
+}
 
 // Keyboard shortcuts
 document.addEventListener('keydown', function(e) {

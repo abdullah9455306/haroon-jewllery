@@ -335,7 +335,7 @@ $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
                                             </td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
-                                                    <a href="order-details.php?id=<?php echo $order['id']; ?>" class="btn btn-outline-primary">
+                                                    <a href="order-details.php?id=<?php echo $order['id']; ?>" class="btn btn-gold">
                                                         <i class="fas fa-eye me-1"></i>View
                                                     </a>
                                                     <?php if ($order['order_status'] === 'pending'): ?>
