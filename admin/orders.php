@@ -1,20 +1,62 @@
 <?php
-require_once 'includes/admin-header.php';
-
-// Initialize database connection
+require_once '../config/constants.php';
 require_once '../config/database.php';
-$db = new Database();
-$conn = $db->getConnection();
 
-// Check admin permissions
-if ($_SESSION['admin_role'] !== 'admin' && !$_SESSION['is_super_admin']) {
+// Check admin permissions BEFORE any output
+if (!isset($_SESSION['admin_logged_in']) || ($_SESSION['admin_role'] !== 'admin' && !$_SESSION['is_super_admin'])) {
     header('Location: dashboard.php');
     exit;
 }
 
-// Handle order actions
-$success_message = '';
-$error_message = '';
+// Initialize database connection
+$db = new Database();
+$conn = $db->getConnection();
+
+// Handle Status Inquiry FIRST - before any output
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status_inquiry'])) {
+    $transactionRef = $_POST['transaction_ref'] ?? '';
+    $order_id = $_POST['order_id'] ?? '';
+
+    if (!empty($transactionRef)) {
+        try {
+            require_once '../api/jazzcash-payment.php';
+            $jazzcash = new JazzCashPayment();
+
+            $inquiryResult = $jazzcash->performStatusInquiry($transactionRef);
+
+            if ($inquiryResult['success']) {
+                $_SESSION['success_message'] = "Status Inquiry Successful: " . $inquiryResult['status'];
+            } else {
+                $_SESSION['error_message'] = "Status Inquiry Failed: " . $inquiryResult['response_message'];
+            }
+
+            // Store inquiry result in session
+            $_SESSION['status_inquiry_result'] = $inquiryResult;
+
+            // Redirect back to the same order view
+            if (!empty($order_id)) {
+                header('Location: orders.php?view_order=1&order_id=' . $order_id);
+                exit;
+            } else {
+                header('Location: orders.php');
+                exit;
+            }
+
+        } catch (Exception $e) {
+            $_SESSION['error_message'] = "Status Inquiry Error: " . $e->getMessage();
+        }
+    } else {
+        $_SESSION['error_message'] = "Transaction reference is required for status inquiry.";
+    }
+}
+
+// Now include the admin header (after all potential redirects)
+require_once 'includes/admin-header.php';
+
+// Handle other POST actions (update, delete) after header inclusion
+$success_message = $_SESSION['success_message'] ?? '';
+$error_message = $_SESSION['error_message'] ?? '';
+unset($_SESSION['success_message'], $_SESSION['error_message']);
 
 // Update order status
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_order_status'])) {
@@ -60,6 +102,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_order'])) {
     } catch (PDOException $e) {
         $conn->rollBack();
         $error_message = "Error deleting order: " . $e->getMessage();
+    }
+}
+
+// Display status inquiry result if available
+$statusInquiryResult = $_SESSION['status_inquiry_result'] ?? null;
+if ($statusInquiryResult && !isset($_POST['status_inquiry'])) {
+    // Only clear if not from current POST to avoid flash
+    unset($_SESSION['status_inquiry_result']);
+}
+
+// Handle order details view
+$order_details = null;
+$order_items = [];
+$payment_details = null;
+
+if (isset($_GET['view_order']) && isset($_GET['order_id'])) {
+    $view_order_id = intval($_GET['order_id']);
+
+    try {
+        // Get complete order details
+        $order_sql = "SELECT o.*, u.name as user_name
+                     FROM orders o
+                     LEFT JOIN users u ON o.user_id = u.id
+                     WHERE o.id = ?";
+        $order_stmt = $conn->prepare($order_sql);
+        $order_stmt->execute([$view_order_id]);
+        $order_details = $order_stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($order_details) {
+            // Get order items
+            $items_sql = "SELECT oi.*, p.slug as product_slug, p.image as product_image
+                         FROM order_items oi
+                         LEFT JOIN products p ON oi.product_id = p.id
+                         WHERE oi.order_id = ?";
+            $items_stmt = $conn->prepare($items_sql);
+            $items_stmt->execute([$view_order_id]);
+            $order_items = $items_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Get payment details based on payment method
+            if ($order_details['payment_method'] === 'jazzcash_mobile') {
+                $payment_sql = "SELECT * FROM jazzcash_transactions WHERE order_id = ?";
+                $payment_stmt = $conn->prepare($payment_sql);
+                $payment_stmt->execute([$view_order_id]);
+                $payment_details = $payment_stmt->fetch(PDO::FETCH_ASSOC);
+            } elseif ($order_details['payment_method'] === 'jazzcash_card') {
+                $payment_sql = "SELECT * FROM card_payments WHERE order_id = ?";
+                $payment_stmt = $conn->prepare($payment_sql);
+                $payment_stmt->execute([$view_order_id]);
+                $payment_details = $payment_stmt->fetch(PDO::FETCH_ASSOC);
+            } else {
+                $payment_details = null;
+            }
+        } else {
+            $error_message = "Order not found!";
+        }
+    } catch (PDOException $e) {
+        $error_message = "Error loading order details: " . $e->getMessage();
     }
 }
 
@@ -159,6 +258,338 @@ $today_stmt = $conn->query("
     WHERE DATE(created_at) = CURDATE()
 ");
 $today_stats = $today_stmt->fetch(PDO::FETCH_ASSOC);
+
+// Function to display order details
+function displayOrderDetailsHTML($order, $items, $payment, $statusInquiryResult = null) {
+    // Format currency
+    $formatCurrency = function($amount) {
+        return CURRENCY . ' ' . number_format($amount, 2);
+    };
+
+    // Format date
+    $formatDate = function($dateString) {
+        return date('M j, Y g:i A', strtotime($dateString));
+    };
+
+    // Get status badge
+    $getStatusBadge = function($status, $type = 'order') {
+        $badges = [
+            'order' => [
+                'pending' => 'bg-warning',
+                'processing' => 'bg-info',
+                'shipped' => 'bg-primary',
+                'delivered' => 'bg-success',
+                'cancelled' => 'bg-danger'
+            ],
+            'payment' => [
+                'pending' => 'bg-warning',
+                'paid' => 'bg-success',
+                'failed' => 'bg-danger',
+                'refunded' => 'bg-info'
+            ]
+        ];
+        return $badges[$type][$status] ?? 'bg-secondary';
+    };
+
+    // Get payment method name
+    $getPaymentMethodName = function($method) {
+        $methods = [
+            'jazzcash_mobile' => 'JazzCash Mobile',
+            'jazzcash_card' => 'JazzCash Card',
+            'cod' => 'Cash on Delivery',
+            'bank' => 'Bank Transfer'
+        ];
+        return $methods[$method] ?? $method;
+    };
+
+    ob_start();
+    ?>
+    <div class="row">
+        <!-- Order Summary -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-receipt me-2"></i>Order Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Order Number:</strong></div>
+                        <div class="col-7"><?php echo htmlspecialchars($order['order_number']); ?></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Order Date:</strong></div>
+                        <div class="col-7"><?php echo $formatDate($order['created_at']); ?></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Order Status:</strong></div>
+                        <div class="col-7">
+                            <span class="badge <?php echo $getStatusBadge($order['order_status']); ?>">
+                                <?php echo ucfirst($order['order_status']); ?>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Payment Status:</strong></div>
+                        <div class="col-7">
+                            <span class="badge <?php echo $getStatusBadge($order['payment_status'], 'payment'); ?>">
+                                <?php echo ucfirst($order['payment_status']); ?>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Payment Method:</strong></div>
+                        <div class="col-7"><?php echo $getPaymentMethodName($order['payment_method']); ?></div>
+                    </div>
+                    <?php if ($order['jazzcash_transaction_id']): ?>
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Transaction ID:</strong></div>
+                        <div class="col-7"><code><?php echo htmlspecialchars($order['jazzcash_transaction_id']); ?></code></div>
+                    </div>
+                    <?php endif; ?>
+                    <?php if ($order['notes']): ?>
+                    <div class="row">
+                        <div class="col-12">
+                            <strong>Admin Notes:</strong>
+                            <p class="mt-1 mb-0 text-muted"><?php echo nl2br(htmlspecialchars($order['notes'])); ?></p>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Information -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-user me-2"></i>Customer Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Name:</strong></div>
+                        <div class="col-7"><?php echo htmlspecialchars($order['customer_name']); ?></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Email:</strong></div>
+                        <div class="col-7"><?php echo htmlspecialchars($order['customer_email']); ?></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Mobile:</strong></div>
+                        <div class="col-7"><?php echo htmlspecialchars($order['customer_mobile']); ?></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Address:</strong></div>
+                        <div class="col-7"><?php echo nl2br(htmlspecialchars($order['customer_address'])); ?></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>City:</strong></div>
+                        <div class="col-7"><?php echo htmlspecialchars($order['customer_city']); ?></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Country:</strong></div>
+                        <div class="col-7"><?php echo htmlspecialchars($order['customer_country']); ?></div>
+                    </div>
+                    <?php if ($order['user_id']): ?>
+                    <div class="row">
+                        <div class="col-12">
+                            <small class="text-muted">
+                                <i class="fas fa-user-check me-1"></i>Registered User: <?php echo htmlspecialchars($order['user_name']); ?>
+                            </small>
+                        </div>
+                    </div>
+                    <?php else: ?>
+                    <div class="row">
+                        <div class="col-12">
+                            <small class="text-muted">
+                                <i class="fas fa-user-clock me-1"></i>Guest Checkout
+                            </small>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Items -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="fas fa-shopping-bag me-2"></i>Order Items (<?php echo count($items); ?>)</h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($items as $item): ?>
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <?php if ($item['product_image']): ?>
+                                    <div class="flex-shrink-0 me-3">
+                                        <img src="../<?php echo htmlspecialchars($item['product_image']); ?>"
+                                             alt="<?php echo htmlspecialchars($item['product_name']); ?>"
+                                             class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
+                                    </div>
+                                    <?php endif; ?>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1"><?php echo htmlspecialchars($item['product_name']); ?></h6>
+                                        <?php if ($item['product_slug']): ?>
+                                        <small class="text-muted">
+                                            <a href="../product.php?slug=<?php echo urlencode($item['product_slug']); ?>" target="_blank">
+                                                View Product
+                                            </a>
+                                        </small>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><?php echo $formatCurrency($item['product_price']); ?></td>
+                            <td><?php echo $item['quantity']; ?></td>
+                            <td><strong><?php echo $formatCurrency($item['total_price']); ?></strong></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Totals -->
+    <div class="row">
+        <div class="col-md-6 offset-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-calculator me-2"></i>Order Totals</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-6"><strong>Subtotal:</strong></div>
+                        <div class="col-6 text-end"><?php echo $formatCurrency($order['subtotal']); ?></div>
+                    </div>
+                    <?php if ($order['shipping'] > 0): ?>
+                    <div class="row mb-2">
+                        <div class="col-6"><strong>Shipping:</strong></div>
+                        <div class="col-6 text-end">+ <?php echo $formatCurrency($order['shipping']); ?></div>
+                    </div>
+                    <?php endif; ?>
+                    <?php if ($order['tax'] > 0): ?>
+                    <div class="row mb-2">
+                        <div class="col-6"><strong>Tax:</strong></div>
+                        <div class="col-6 text-end">+ <?php echo $formatCurrency($order['tax']); ?></div>
+                    </div>
+                    <?php endif; ?>
+                    <div class="row mb-0 pt-2 border-top">
+                        <div class="col-6"><h5 class="mb-0">Total Amount:</h5></div>
+                        <div class="col-6 text-end"><h5 class="mb-0 text-gold"><?php echo $formatCurrency($order['total_amount']); ?></h5></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Details -->
+    <?php if ($payment): ?>
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="fas fa-credit-card me-2"></i>Payment Details</h6>
+            <?php if (!empty($payment['pp_TxnRefNo'])): ?>
+            <form method="POST" action="orders.php" class="d-inline">
+                <input type="hidden" name="status_inquiry" value="1">
+                <input type="hidden" name="transaction_ref" value="<?php echo htmlspecialchars($payment['pp_TxnRefNo']); ?>">
+                <input type="hidden" name="order_id" value="<?php echo $order['id']; ?>">
+
+                <img
+                                                        src="<?php echo SITE_URL; ?>/assets/images/jazz-logo.png"
+                                                        style="width: 42px;border-radius: 10px;"
+                                                    />
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-sync-alt me-1"></i>Status Inquiry
+                </button>
+            </form>
+            <?php endif; ?>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <?php if ($order['payment_method'] === 'jazzcash_mobile'): ?>
+                <div class="col-md-4">
+                    <strong>Transaction Ref:</strong><br>
+                    <code><?php echo htmlspecialchars($payment['pp_TxnRefNo']); ?></code>
+                </div>
+                <div class="col-md-4">
+                    <strong>Amount:</strong><br>
+                    <?php echo $formatCurrency($payment['pp_Amount']); ?>
+                </div>
+                <div class="col-md-4">
+                    <strong>Mobile Number:</strong><br>
+                    <?php echo htmlspecialchars($payment['pp_MobileNumber'] ?? 'N/A'); ?>
+                </div>
+                <?php elseif ($order['payment_method'] === 'jazzcash_card'): ?>
+                <div class="col-md-4">
+                    <strong>Transaction Ref:</strong><br>
+                    <code><?php echo htmlspecialchars($payment['pp_TxnRefNo']); ?></code>
+                </div>
+                <div class="col-md-4">
+                    <strong>Amount:</strong><br>
+                    <?php echo $formatCurrency($payment['pp_Amount']); ?>
+                </div>
+                <div class="col-md-4">
+                    <strong>Card Holder:</strong><br>
+                    <?php echo htmlspecialchars($payment['pp_CardHolderName'] ?? 'N/A'); ?>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Status Inquiry Results -->
+            <?php if ($statusInquiryResult):?>
+            <div class="mt-3">
+                <div class="alert alert-<?php echo $statusInquiryResult['success'] ? 'success' : 'danger'; ?>">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-<?php echo $statusInquiryResult['success'] ? 'check-circle' : 'exclamation-triangle'; ?> me-2"></i>
+                        Status Inquiry Result
+                    </h6>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <strong>Response Code:</strong> <?php echo $statusInquiryResult['response_code']; ?><br>
+                            <strong>Status:</strong> <?php echo $statusInquiryResult['status']; ?><br>
+                            <strong>Message:</strong> <?php echo $statusInquiryResult['response_message']; ?>
+                        </div>
+                        <?php if ($statusInquiryResult['success']): ?>
+                        <div class="col-md-6">
+                            <?php if (!empty($statusInquiryResult['amount'])): ?>
+                            <strong>Amount:</strong> <?php echo CURRENCY . ' ' . number_format($statusInquiryResult['amount'], 2); ?><br>
+                            <?php endif; ?>
+                            <?php if (!empty($statusInquiryResult['transaction_date'])): ?>
+                            <strong>Transaction Date:</strong> <?php echo date('M j, Y g:i A', strtotime($statusInquiryResult['transaction_date'])); ?><br>
+                            <?php endif; ?>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3">
+              <strong>Status Inquiry API response:</strong><br>
+                <?php
+
+                    echo '<pre>',print_r($statusInquiryResult['raw_response'],1),'</pre>';
+
+                 ?>
+            </div>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+    <?php
+    return ob_get_clean();
+}
 ?>
 
 <!-- Main Content -->
@@ -545,13 +976,17 @@ $today_stats = $today_stmt->fetch(PDO::FETCH_ASSOC);
                 <h5 class="modal-title" id="viewOrderModalLabel">Order Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="text-center py-4">
-                    <div class="spinner-border text-gold" role="status">
-                        <span class="visually-hidden">Loading...</span>
+            <div class="modal-body" id="orderDetailsContent">
+                <?php if ($order_details): ?>
+                    <?php echo displayOrderDetailsHTML($order_details, $order_items, $payment_details, $statusInquiryResult); ?>
+                <?php else: ?>
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-gold" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading order details...</p>
                     </div>
-                    <p class="mt-2">Loading order details...</p>
-                </div>
+                <?php endif; ?>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -811,14 +1246,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Status inquiry button loading state
+    const statusInquiryBtns = document.querySelectorAll('.status-inquiry-btn');
+    statusInquiryBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Checking...';
+            this.disabled = true;
+
+            // Re-enable after 5 seconds if still disabled (fallback)
+            setTimeout(() => {
+                if (this.disabled) {
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            }, 5000);
+        });
+    });
+
     // Reset modals when closed
     const viewOrderModal = document.getElementById('viewOrderModal');
     const editOrderModal = document.getElementById('editOrderModal');
 
     if (viewOrderModal) {
         viewOrderModal.addEventListener('hidden.bs.modal', function() {
-            document.getElementById('viewOrderModalLabel').textContent = 'Order Details';
-            document.querySelector('#viewOrderModal .modal-body').innerHTML = `
+            // Clear the order details when modal is closed
+            document.getElementById('orderDetailsContent').innerHTML = `
                 <div class="text-center py-4">
                     <div class="spinner-border text-gold" role="status">
                         <span class="visually-hidden">Loading...</span>
@@ -840,33 +1293,50 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('edit_customer_name_display').textContent = '-';
         });
     }
+
+    <?php if ($order_details): ?>
+    // Auto-show the view modal if order details are loaded
+    const viewModal = new bootstrap.Modal(document.getElementById('viewOrderModal'));
+    viewModal.show();
+    <?php endif; ?>
 });
 
-// Load order details for viewing
+// Load order details by submitting form
 function loadOrderDetails(orderId, orderNumber) {
-    document.getElementById('viewOrderModalLabel').textContent = `Order Details - ${orderNumber}`;
+    const form = document.createElement('form');
+    form.method = 'GET';
+    form.action = 'orders.php';
 
-    // Show loading state
-    document.querySelector('#viewOrderModal .modal-body').innerHTML = `
-        <div class="text-center py-4">
-            <div class="spinner-border text-gold" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2">Loading order details...</p>
-        </div>
-    `;
+    // Preserve existing GET parameters
+    <?php
+    $currentParams = $_GET;
+    unset($currentParams['view_order']);
+    unset($currentParams['order_id']);
+    foreach ($currentParams as $key => $value) {
+        if (!empty($value)) {
+            echo "const input".htmlspecialchars($key)." = document.createElement('input');";
+            echo "input".htmlspecialchars($key).".type = 'hidden';";
+            echo "input".htmlspecialchars($key).".name = '".htmlspecialchars($key)."';";
+            echo "input".htmlspecialchars($key).".value = '".htmlspecialchars($value)."';";
+            echo "form.appendChild(input".htmlspecialchars($key).");";
+        }
+    }
+    ?>
 
-    // In a real implementation, you would make an AJAX call here
-    // For now, we'll just show a message since we don't have the full order details
-    setTimeout(() => {
-        document.querySelector('#viewOrderModal .modal-body').innerHTML = `
-            <div class="alert alert-info text-center">
-                <i class="fas fa-info-circle me-2"></i>
-                Order details would be loaded here for order #${orderNumber} (ID: ${orderId})
-                <br><small>In a real implementation, this would fetch complete order details from the server.</small>
-            </div>
-        `;
-    }, 1000);
+    const viewOrderInput = document.createElement('input');
+    viewOrderInput.type = 'hidden';
+    viewOrderInput.name = 'view_order';
+    viewOrderInput.value = '1';
+    form.appendChild(viewOrderInput);
+
+    const orderIdInput = document.createElement('input');
+    orderIdInput.type = 'hidden';
+    orderIdInput.name = 'order_id';
+    orderIdInput.value = orderId;
+    form.appendChild(orderIdInput);
+
+    document.body.appendChild(form);
+    form.submit();
 }
 
 // Load order data for editing
@@ -888,7 +1358,7 @@ function printOrder() {
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Order Invoice</title>
+            <title>Order Invoice - <?php echo SITE_NAME; ?></title>
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
             <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
             <style>
@@ -896,11 +1366,17 @@ function printOrder() {
                 .text-gold { color: #d4af37 !important; }
                 @media print {
                     .no-print { display: none !important; }
+                    .modal-footer { display: none !important; }
+                    .card { border: 1px solid #ddd !important; }
                 }
             </style>
         </head>
         <body>
             <div class="container-fluid py-4">
+                <div class="text-center mb-4">
+                    <h2 class="text-gold"><?php echo SITE_NAME; ?></h2>
+                    <h4>Order Invoice</h4>
+                </div>
                 ${orderContent}
             </div>
         </body>
@@ -910,7 +1386,7 @@ function printOrder() {
     printWindow.focus();
     setTimeout(() => {
         printWindow.print();
-        printWindow.close();
+        // printWindow.close();
     }, 500);
 }
 

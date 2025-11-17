@@ -1,5 +1,4 @@
 <?php
-session_start();
 require_once '../config/constants.php';
 
 // Redirect to login if not authenticated as admin

@@ -155,40 +155,40 @@ class JazzCashPayment {
         }
     }
 
-public function callAPI($allData) {
-    $curl = curl_init();
+    public function callAPI($allData) {
+        $curl = curl_init();
 
-    // JazzCash expects form data, not JSON - use http_build_query instead of json_encode
-    $data = http_build_query($allData['data']);
-    $postUrl = $allData['payment_url'];
+        // JazzCash expects form data, not JSON - use http_build_query instead of json_encode
+        $data = http_build_query($allData['data']);
+        $postUrl = $allData['payment_url'];
 
-    curl_setopt_array($curl, [
-        CURLOPT_URL => $postUrl,
-        CURLOPT_POST => 1,
-        CURLOPT_POSTFIELDS => $data,
-        CURLOPT_RETURNTRANSFER => 1,
-        CURLOPT_FOLLOWLOCATION => 0,
-        CURLOPT_TIMEOUT => 30,
-        CURLOPT_SSL_VERIFYPEER => true,
-        CURLOPT_SSL_VERIFYHOST => 2,
-        CURLOPT_HTTPHEADER => [
-            'Content-Type: application/x-www-form-urlencoded'
-        ]
-    ]);
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $postUrl,
+            CURLOPT_POST => 1,
+            CURLOPT_POSTFIELDS => $data,
+            CURLOPT_RETURNTRANSFER => 1,
+            CURLOPT_FOLLOWLOCATION => 0,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/x-www-form-urlencoded'
+            ]
+        ]);
 
-    // EXECUTE
-    $result = curl_exec($curl);
-    $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-    $error = curl_error($curl);
+        // EXECUTE
+        $result = curl_exec($curl);
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $error = curl_error($curl);
 
-    curl_close($curl);
+        curl_close($curl);
 
-    if (!$result) {
-        throw new Exception("API Connection Failure: " . $error);
+        if (!$result) {
+            throw new Exception("API Connection Failure: " . $error);
+        }
+
+        return $result;
     }
-
-    return $result;
-}
 
     public function verifyResponse($postData) {
         if($postData['pp_ResponseCode'] === '000') {
@@ -220,4 +220,159 @@ public function callAPI($allData) {
     public function isSuccessResponse($responseCode) {
         return $responseCode === '000' || $responseCode === '00';
     }
+
+    // Status Inquiry Methods
+    public function statusInquiryV1($transactionRefNo) {
+        date_default_timezone_set('Asia/Karachi');
+
+        $data = [
+            'pp_TxnRefNo' => $transactionRefNo,
+            'pp_MerchantID' => $this->merchantId,
+            'pp_Password' => $this->password,
+        ];
+
+        $data['pp_SecureHash'] = $this->generateHash($data);
+
+        return [
+            'data' => $data,
+            'inquiry_url' => $this->getBaseUrl() . 'ApplicationAPI/API/PaymentInquiry/Inquire'
+        ];
+    }
+
+    public function statusInquiryV2($transactionRefNo) {
+        date_default_timezone_set('Asia/Karachi');
+
+        $data = [
+            'pp_TxnRefNo' => $transactionRefNo,
+            'pp_MerchantID' => $this->merchantId,
+            'pp_Password' => $this->password,
+        ];
+
+        $data['pp_SecureHash'] = $this->generateHash($data);
+
+        return [
+            'data' => $data,
+            'inquiry_url' => $this->getBaseUrl() . 'ApplicationAPI/API/PaymentInquiry/Inquire'
+        ];
+    }
+
+    public function statusInquiry($transactionRefNo) {
+        if ($this->apiVersion === '2.0') {
+            return $this->statusInquiryV2($transactionRefNo);
+        } else {
+            return $this->statusInquiryV1($transactionRefNo);
+        }
+    }
+
+public function performStatusInquiry($transactionRefNo) {
+    try {
+        $inquiryData = $this->statusInquiry($transactionRefNo);
+
+        $curl = curl_init();
+
+        $data = http_build_query($inquiryData['data']);
+        $inquiryUrl = $inquiryData['inquiry_url'];
+
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $inquiryUrl,
+            CURLOPT_POST => 1,
+            CURLOPT_POSTFIELDS => $data,
+            CURLOPT_RETURNTRANSFER => 1,
+            CURLOPT_FOLLOWLOCATION => 0,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/x-www-form-urlencoded'
+            ]
+        ]);
+
+        $result = curl_exec($curl);
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $error = curl_error($curl);
+
+        curl_close($curl);
+
+        if (!$result) {
+            throw new Exception("Status Inquiry API Connection Failure: " . $error);
+        }
+
+        // Debug: Log the raw response
+        error_log("Raw JazzCash Response: " . $result);
+
+        // Try to parse as JSON first
+        $responseArray = json_decode($result, true);
+
+        if (json_last_error() === JSON_ERROR_NONE) {
+            // Successfully decoded as JSON
+            return $this->parseStatusInquiryResponse($responseArray);
+        }
+
+        // If JSON decoding fails, try form data parsing
+        parse_str($result, $formDataArray);
+
+        if (!empty($formDataArray)) {
+            return $this->parseStatusInquiryResponse($formDataArray);
+        }
+
+        // If both fail, check if it's a JSON string as array key (your current issue)
+        if (is_array($result) && count($result) === 1) {
+            $keys = array_keys($result);
+            $firstKey = $keys[0];
+
+            // Try to decode the key as JSON
+            $jsonFromKey = json_decode($firstKey, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                return $this->parseStatusInquiryResponse($jsonFromKey);
+            }
+        }
+
+        throw new Exception("Invalid response format from JazzCash API: " . $result);
+
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'error' => $e->getMessage(),
+            'response_code' => 'ERROR',
+            'response_message' => $e->getMessage()
+        ];
+    }
+}
+
+private function parseStatusInquiryResponse($responseData) {
+    $responseCode = $responseData['pp_ResponseCode'] ?? 'UNKNOWN';
+    $responseMessage = $responseData['pp_ResponseMessage'] ?? 'No response message';
+
+    $statusMap = [
+        '000' => 'Transaction Successful',
+        '001' => 'Transaction In Progress',
+        '002' => 'Transaction Failed',
+        '003' => 'Transaction Cancelled',
+        '124' => 'Invalid Merchant',
+        '210' => 'Invalid Parameters',
+        '366' => 'Transaction Already Processed',
+        '367' => 'Transaction Not Found',
+        '368' => 'Transaction Expired'
+    ];
+
+    $status = $statusMap[$responseCode] ?? $responseMessage;
+
+    return [
+        'success' => $this->isSuccessResponse($responseCode),
+        'response_code' => $responseCode,
+        'response_message' => $responseMessage,
+        'status' => $status,
+        'transaction_ref_no' => $responseData['pp_RetrievalReferenceNo'] ?? '', // Changed from pp_TxnRefNo
+        'amount' => isset($responseData['pp_Amount']) ? $responseData['pp_Amount'] / 100 : 0,
+        'transaction_date' => $responseData['pp_SettlementDate'] ?? '', // Changed from pp_TxnDateTime
+        'bank_id' => $responseData['pp_BankID'] ?? '',
+        'product_id' => $responseData['pp_ProductID'] ?? '',
+        'payment_response_code' => $responseData['pp_PaymentResponseCode'] ?? '', // New field
+        'payment_response_message' => $responseData['pp_PaymentResponseMessage'] ?? '', // New field
+        'auth_code' => $responseData['pp_AuthCode'] ?? '', // New field
+        'settlement_date' => $responseData['pp_SettlementDate'] ?? '', // New field
+        'settlement_expiry' => $responseData['pp_SettlementExpiry'] ?? '', // New field
+        'raw_response' => $responseData
+    ];
+}
 }
