@@ -1,14 +1,13 @@
 <?php
-$pageTitle = "Product Details";
+// Start session and include files that don't output content
 require_once '../config/constants.php';
-require_once '../includes/header.php';
+require_once '../config/database.php';
 
 // Initialize database connection
-require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
 
-// Get product ID from URL
+// Get product ID from URL and validate EARLY
 $product_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 if ($product_id <= 0) {
     header('Location: products.php');
@@ -25,12 +24,17 @@ $stmt = $conn->prepare("
 $stmt->execute([$product_id]);
 $product = $stmt->fetch(PDO::FETCH_ASSOC);
 
+// Redirect if product not found - BEFORE any output
 if (!$product) {
     header('Location: products.php');
     exit;
 }
 
-// Get product images
+// Now include header.php which outputs HTML
+$pageTitle = "Product Details";
+require_once '../includes/header.php';
+
+// Rest of your code for getting images, related products, etc.
 $image_stmt = $conn->prepare("
     SELECT * FROM product_images
     WHERE product_id = ?

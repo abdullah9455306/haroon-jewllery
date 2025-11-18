@@ -1,5 +1,5 @@
 <!-- Footer -->
-<footer class="footer bg-dark">
+<footer class="footer bg-dark" style="bottom: -38px;width: 100%;position: relative;">
     <div class="container">
         <div class="row">
             <div class="col-lg-4 col-md-6 mb-4">

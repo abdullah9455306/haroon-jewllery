@@ -55,6 +55,34 @@ class JazzCashPayment {
          return $pp_SecureHash;
     }
 
+        public function verifyResponseHash($postData) {
+            if (!isset($postData['pp_SecureHash'])) {
+                return false;
+            }
+
+            $receivedHash = $postData['pp_SecureHash'];
+
+            unset($postData['pp_SecureHash']);
+
+            ksort($postData);
+
+            $str = '';
+            foreach($postData as $key => $value) {
+                if(!empty($value)){
+                    $str = $str . '&' . $value;
+                }
+            }
+
+            $str = $this->salt.$str;
+            $calculatedHash = hash_hmac('sha256', $str, $this->salt);
+
+            $calculatedHash = strtolower($calculatedHash);
+            $receivedHash = strtolower($receivedHash);
+
+            $result = hash_equals($calculatedHash, $receivedHash);
+            return $result;
+        }
+
     public function initiatePaymentV1($orderData) {
         date_default_timezone_set('Asia/Karachi');
 
@@ -191,34 +219,68 @@ class JazzCashPayment {
     }
 
     public function verifyResponse($postData) {
-        if($postData['pp_ResponseCode'] === '000') {
-            return [
-                'success' => true,
-                'response_code' => $postData['pp_ResponseCode'],
-                'response_message' => $postData['pp_ResponseMessage'],
-                'txn_ref_no' => $postData['pp_TxnRefNo'],
-                'amount' => $postData['pp_Amount'] / 100,
-                'mobile_number' => $postData['ppmpf_1'] ?? '',
-                'cnic_number' => $postData['ppmpf_2'] ?? '',
-                'api_version' => $postData['pp_Version'] ?? '1.1'
-            ];
-        } else {
-            return [
-                'success' => false,
-                'response_code' => $postData['pp_ResponseCode'],
-                'response_message' => $postData['pp_ResponseMessage'],
-                'error' => $postData['pp_ResponseMessage'],
-                'txn_ref_no' => $postData['pp_TxnRefNo'],
-                'amount' => $postData['pp_Amount'] / 100,
-                'mobile_number' => $postData['ppmpf_1'] ?? '',
-                'cnic_number' => $postData['ppmpf_2'] ?? '',
-                'api_version' => $postData['pp_Version'] ?? '1.1'
-            ];
-        }
+      if (!$this->verifyResponseHash($postData)) {
+                return [
+                    'success' => false,
+                    'error' => 'Response integrity check failed',
+                    'response_code' => 'HASH_MISMATCH',
+                    'response_message' => 'Secure hash verification failed for status inquiry'
+                ];
+      }
+
+       $responseCode = $postData['pp_ResponseCode'] ?? 'UNKNOWN';
+       $isSuccess = $this->isSuccessResponse($responseCode);
+       $isPending = $this->isPendingResponse($responseCode);
+
+       if ($isSuccess) {
+           return [
+               'success' => true,
+               'response_code' => $responseCode,
+               'response_message' => $postData['pp_ResponseMessage'],
+               'txn_ref_no' => $postData['pp_TxnRefNo'],
+               'amount' => $postData['pp_Amount'] / 100,
+               'mobile_number' => $postData['ppmpf_1'] ?? '',
+               'cnic_number' => $postData['ppmpf_2'] ?? '',
+               'api_version' => $postData['pp_Version'] ?? '1.1',
+               'status' => 'success',
+           ];
+       } elseif ($isPending) {
+           return [
+               'success' => false,
+               'pending' => true,
+               'response_code' => $responseCode,
+               'response_message' => $postData['pp_ResponseMessage'],
+               'txn_ref_no' => $postData['pp_TxnRefNo'],
+               'amount' => $postData['pp_Amount'] / 100,
+               'mobile_number' => $postData['ppmpf_1'] ?? '',
+               'cnic_number' => $postData['ppmpf_2'] ?? '',
+               'api_version' => $postData['pp_Version'] ?? '1.1',
+               'status' => 'pending'
+           ];
+       } else {
+           return [
+               'success' => false,
+               'response_code' => $responseCode,
+               'response_message' => $postData['pp_ResponseMessage'],
+               'error' => $postData['pp_ResponseMessage'],
+               'txn_ref_no' => $postData['pp_TxnRefNo'],
+               'amount' => $postData['pp_Amount'] / 100,
+               'mobile_number' => $postData['ppmpf_1'] ?? '',
+               'cnic_number' => $postData['ppmpf_2'] ?? '',
+               'api_version' => $postData['pp_Version'] ?? '1.1',
+               'status' => 'failed'
+           ];
+       }
     }
 
     public function isSuccessResponse($responseCode) {
-        return $responseCode === '000' || $responseCode === '00';
+        $successCodes = ['000', '00', '121'];
+        return in_array($responseCode, $successCodes);
+    }
+
+    public function isPendingResponse($responseCode) {
+        $pendingCodes = ['124', '157', '001'];
+        return in_array($responseCode, $pendingCodes);
     }
 
     // Status Inquiry Methods
@@ -340,39 +402,46 @@ public function performStatusInquiry($transactionRefNo) {
 }
 
 private function parseStatusInquiryResponse($responseData) {
+   if (!$this->verifyResponseHash($responseData)) {
+        return [
+            'success' => false,
+            'error' => 'Response integrity check failed',
+            'response_code' => 'HASH_MISMATCH',
+            'response_message' => 'Secure hash verification failed for status inquiry'
+        ];
+    }
+
     $responseCode = $responseData['pp_ResponseCode'] ?? 'UNKNOWN';
     $responseMessage = $responseData['pp_ResponseMessage'] ?? 'No response message';
 
-    $statusMap = [
-        '000' => 'Transaction Successful',
-        '001' => 'Transaction In Progress',
-        '002' => 'Transaction Failed',
-        '003' => 'Transaction Cancelled',
-        '124' => 'Invalid Merchant',
-        '210' => 'Invalid Parameters',
-        '366' => 'Transaction Already Processed',
-        '367' => 'Transaction Not Found',
-        '368' => 'Transaction Expired'
-    ];
+    $isSuccess = $this->isSuccessResponse($responseCode);
+    $isPending = $this->isPendingResponse($responseCode);
+
+    $status = 'failed';
+    if ($isSuccess) {
+        $status = 'success';
+    } elseif ($isPending) {
+        $status = 'pending';
+    }
 
     $status = $statusMap[$responseCode] ?? $responseMessage;
 
     return [
-        'success' => $this->isSuccessResponse($responseCode),
-        'response_code' => $responseCode,
-        'response_message' => $responseMessage,
-        'status' => $status,
-        'transaction_ref_no' => $responseData['pp_RetrievalReferenceNo'] ?? '', // Changed from pp_TxnRefNo
-        'amount' => isset($responseData['pp_Amount']) ? $responseData['pp_Amount'] / 100 : 0,
-        'transaction_date' => $responseData['pp_SettlementDate'] ?? '', // Changed from pp_TxnDateTime
-        'bank_id' => $responseData['pp_BankID'] ?? '',
-        'product_id' => $responseData['pp_ProductID'] ?? '',
-        'payment_response_code' => $responseData['pp_PaymentResponseCode'] ?? '', // New field
-        'payment_response_message' => $responseData['pp_PaymentResponseMessage'] ?? '', // New field
-        'auth_code' => $responseData['pp_AuthCode'] ?? '', // New field
-        'settlement_date' => $responseData['pp_SettlementDate'] ?? '', // New field
-        'settlement_expiry' => $responseData['pp_SettlementExpiry'] ?? '', // New field
-        'raw_response' => $responseData
+            'success' => $isSuccess,
+            'pending' => $isPending,
+            'response_code' => $responseCode,
+            'response_message' => $responseMessage,
+            'status' => $status,
+            'transaction_ref_no' => $responseData['pp_RetrievalReferenceNo'] ?? $responseData['pp_TxnRefNo'] ?? '',
+            'amount' => isset($responseData['pp_Amount']) ? $responseData['pp_Amount'] / 100 : 0,
+            'transaction_date' => $responseData['pp_SettlementDate'] ?? $responseData['pp_TxnDateTime'] ?? '',
+            'bank_id' => $responseData['pp_BankID'] ?? '',
+            'product_id' => $responseData['pp_ProductID'] ?? '',
+            'payment_response_code' => $responseData['pp_PaymentResponseCode'] ?? '',
+            'payment_response_message' => $responseData['pp_PaymentResponseMessage'] ?? '',
+            'auth_code' => $responseData['pp_AuthCode'] ?? '',
+            'settlement_date' => $responseData['pp_SettlementDate'] ?? '',
+            'raw_response' => $responseData
     ];
 }
 }
