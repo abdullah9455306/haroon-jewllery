@@ -402,46 +402,39 @@ public function performStatusInquiry($transactionRefNo) {
 }
 
 private function parseStatusInquiryResponse($responseData) {
-   if (!$this->verifyResponseHash($responseData)) {
-        return [
-            'success' => false,
-            'error' => 'Response integrity check failed',
-            'response_code' => 'HASH_MISMATCH',
-            'response_message' => 'Secure hash verification failed for status inquiry'
-        ];
-    }
-
     $responseCode = $responseData['pp_ResponseCode'] ?? 'UNKNOWN';
     $responseMessage = $responseData['pp_ResponseMessage'] ?? 'No response message';
 
-    $isSuccess = $this->isSuccessResponse($responseCode);
-    $isPending = $this->isPendingResponse($responseCode);
-
-    $status = 'failed';
-    if ($isSuccess) {
-        $status = 'success';
-    } elseif ($isPending) {
-        $status = 'pending';
-    }
+    $statusMap = [
+        '000' => 'Transaction Successful',
+        '001' => 'Transaction In Progress',
+        '002' => 'Transaction Failed',
+        '003' => 'Transaction Cancelled',
+        '124' => 'Invalid Merchant',
+        '210' => 'Invalid Parameters',
+        '366' => 'Transaction Already Processed',
+        '367' => 'Transaction Not Found',
+        '368' => 'Transaction Expired'
+    ];
 
     $status = $statusMap[$responseCode] ?? $responseMessage;
 
     return [
-            'success' => $isSuccess,
-            'pending' => $isPending,
-            'response_code' => $responseCode,
-            'response_message' => $responseMessage,
-            'status' => $status,
-            'transaction_ref_no' => $responseData['pp_RetrievalReferenceNo'] ?? $responseData['pp_TxnRefNo'] ?? '',
-            'amount' => isset($responseData['pp_Amount']) ? $responseData['pp_Amount'] / 100 : 0,
-            'transaction_date' => $responseData['pp_SettlementDate'] ?? $responseData['pp_TxnDateTime'] ?? '',
-            'bank_id' => $responseData['pp_BankID'] ?? '',
-            'product_id' => $responseData['pp_ProductID'] ?? '',
-            'payment_response_code' => $responseData['pp_PaymentResponseCode'] ?? '',
-            'payment_response_message' => $responseData['pp_PaymentResponseMessage'] ?? '',
-            'auth_code' => $responseData['pp_AuthCode'] ?? '',
-            'settlement_date' => $responseData['pp_SettlementDate'] ?? '',
-            'raw_response' => $responseData
+        'success' => $this->isSuccessResponse($responseCode),
+        'response_code' => $responseCode,
+        'response_message' => $responseMessage,
+        'status' => $status,
+        'transaction_ref_no' => $responseData['pp_RetrievalReferenceNo'] ?? '', // Changed from pp_TxnRefNo
+        'amount' => isset($responseData['pp_Amount']) ? $responseData['pp_Amount'] / 100 : 0,
+        'transaction_date' => $responseData['pp_SettlementDate'] ?? '', // Changed from pp_TxnDateTime
+        'bank_id' => $responseData['pp_BankID'] ?? '',
+        'product_id' => $responseData['pp_ProductID'] ?? '',
+        'payment_response_code' => $responseData['pp_PaymentResponseCode'] ?? '', // New field
+        'payment_response_message' => $responseData['pp_PaymentResponseMessage'] ?? '', // New field
+        'auth_code' => $responseData['pp_AuthCode'] ?? '', // New field
+        'settlement_date' => $responseData['pp_SettlementDate'] ?? '', // New field
+        'settlement_expiry' => $responseData['pp_SettlementExpiry'] ?? '', // New field
+        'raw_response' => $responseData
     ];
 }
 }
