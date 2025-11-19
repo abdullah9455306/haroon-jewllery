@@ -419,16 +419,6 @@ $current_status = $status_config[$order['order_status']] ?? ['class' => 'bg-seco
                                 <i class="fas fa-envelope me-2"></i>Contact Support
                             </a>
                         </div>
-                        <div class="col-md-6">
-                            <h6>Order Updates</h6>
-                            <p class="text-muted mb-3">You'll receive email notifications about important updates to your order.</p>
-                            <div class="alert alert-light border">
-                                <small>
-                                    <i class="fas fa-info-circle me-2 text-primary"></i>
-                                    Last updated: <?php echo date('F j, Y g:i A', strtotime($order['updated_at'])); ?>
-                                </small>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>

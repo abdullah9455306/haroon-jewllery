@@ -343,11 +343,11 @@ $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
                                                             <i class="fas fa-times me-1"></i>Cancel
                                                         </button>
                                                     <?php endif; ?>
-                                                    <?php if ($order['order_status'] === 'delivered'): ?>
+                                                   <!-- <?php if ($order['order_status'] === 'delivered'): ?>
                                                         <button type="button" class="btn btn-outline-success">
                                                             <i class="fas fa-redo me-1"></i>Reorder
                                                         </button>
-                                                    <?php endif; ?>
+                                                    <?php endif; ?>-->
                                                 </div>
                                             </td>
                                         </tr>
