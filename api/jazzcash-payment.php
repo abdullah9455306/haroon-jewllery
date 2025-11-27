@@ -402,8 +402,8 @@ public function performStatusInquiry($transactionRefNo) {
 }
 
 private function parseStatusInquiryResponse($responseData) {
-    $responseCode = $responseData['pp_ResponseCode'] ?? 'UNKNOWN';
-    $responseMessage = $responseData['pp_ResponseMessage'] ?? 'No response message';
+    $responseCode = $responseData['pp_PaymentResponseCode'] ?? 'UNKNOWN';
+    $responseMessage = $responseData['pp_PaymentResponseMessage'] ?? 'No response message';
 
     $statusMap = [
         '000' => 'Transaction Successful',

@@ -211,7 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <!-- Back to Site -->
             <div class="back-to-site">
-                <a href="../index.php" class="text-decoration-none">
+                <a href="<?php echo SITE_URL; ?>/" class="text-decoration-none">
                     <i class="fas fa-arrow-left me-2"></i>Back to Main Site
                 </a>
             </div>

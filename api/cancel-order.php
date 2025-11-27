@@ -2,8 +2,6 @@
 require_once '../config/constants.php';
 require_once '../config/database.php';
 
-session_start();
-
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'error' => 'Not authorized']);
     exit;

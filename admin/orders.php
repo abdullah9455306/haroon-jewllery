@@ -558,7 +558,6 @@ function displayOrderDetailsHTML($order, $items, $payment, $statusInquiryResult 
                     <div class="row mt-2">
                         <div class="col-md-6">
                             <strong>Response Code:</strong> <?php echo $statusInquiryResult['response_code']; ?><br>
-                            <strong>Status:</strong> <?php echo $statusInquiryResult['status']; ?><br>
                             <strong>Message:</strong> <?php echo $statusInquiryResult['response_message']; ?>
                         </div>
                         <?php if ($statusInquiryResult['success']): ?>

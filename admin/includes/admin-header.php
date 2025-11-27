@@ -219,7 +219,7 @@ $pending_count = $conn->query("SELECT COUNT(*) FROM contact_messages WHERE statu
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" href="profile.php"><i class="fas fa-user me-2"></i>Profile</a></li>
-                                    <li><a class="dropdown-item" href="../index.php" target="_blank"><i class="fas fa-external-link-alt me-2"></i>View Site</a></li>
+                                    <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/" target="_blank"><i class="fas fa-external-link-alt me-2"></i>View Site</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                                 </ul>

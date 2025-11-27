@@ -594,7 +594,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Send cancellation request
-            fetch('../api/cancel-order.php', {
+            fetch('<?php echo SITE_URL; ?>/api/cancel-order.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

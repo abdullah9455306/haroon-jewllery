@@ -10,7 +10,7 @@ $conn = $db->getConnection();
 
 // Get search and filter parameters
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-$category = isset($_GET['category']) ? trim($_GET['category']) : '';
+$category = isset($_GET['category']) ? str_replace('+', ' ', trim($_GET['category'])) : '';
 $min_price = isset($_GET['min_price']) ? floatval($_GET['min_price']) : 0;
 $max_price = isset($_GET['max_price']) ? floatval($_GET['max_price']) : 1000000;
 $sort = isset($_GET['sort']) ? $_GET['sort'] : 'newest';
