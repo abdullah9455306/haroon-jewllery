@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             updateSetting($conn, 'store_address', $_POST['store_address']);
             updateSetting($conn, 'currency', $_POST['currency']);
             updateSetting($conn, 'shipping_cost', $_POST['shipping_cost']);
-            updateSetting($conn, 'default_theme', $_POST['default_theme']);
+//             updateSetting($conn, 'default_theme', $_POST['default_theme']);
         }
 
         // JazzCash Mobile Settings
@@ -157,11 +157,11 @@ foreach ($settings_data as $setting) {
 // Get available currencies
 $currencies = [
     'PKR' => 'Pakistani Rupee (PKR)',
-    'USD' => 'US Dollar (USD)',
-    'EUR' => 'Euro (EUR)',
-    'GBP' => 'British Pound (GBP)',
-    'AED' => 'UAE Dirham (AED)',
-    'SAR' => 'Saudi Riyal (SAR)'
+//     'USD' => 'US Dollar (USD)',
+//     'EUR' => 'Euro (EUR)',
+//     'GBP' => 'British Pound (GBP)',
+//     'AED' => 'UAE Dirham (AED)',
+//     'SAR' => 'Saudi Riyal (SAR)'
 ];
 
 // Get available themes
@@ -192,9 +192,9 @@ $smtp_encryption = [
                 <!--<button type="button" class="btn btn-outline-secondary me-2" onclick="window.print()">
                     <i class="fas fa-print me-2"></i>Print
                 </button>-->
-                <button type="button" class="btn btn-outline-dark me-2" data-bs-toggle="modal" data-bs-target="#backupSettingsModal">
+                <!--<button type="button" class="btn btn-outline-dark me-2" data-bs-toggle="modal" data-bs-target="#backupSettingsModal">
                     <i class="fas fa-download me-2"></i>Backup
-                </button>
+                </button>-->
                 <!--<a href="?action=clear_cache" class="btn btn-outline-warning">
                     <i class="fas fa-broom me-2"></i>Clear Cache
                 </a>-->
@@ -231,31 +231,31 @@ $smtp_encryption = [
                         <i class="fas fa-store me-2"></i>General
                     </button>
                 </li>
-                <li class="nav-item" role="presentation">
+                <!--<li class="nav-item" role="presentation">
                     <button class="nav-link" id="payment-tab" data-bs-toggle="pill" data-bs-target="#payment" type="button" role="tab">
                         <i class="fas fa-credit-card me-2"></i>Payment
                     </button>
-                </li>
-                <li class="nav-item" role="presentation">
+                </li>-->
+                <!--<li class="nav-item" role="presentation">
                     <button class="nav-link" id="email-tab" data-bs-toggle="pill" data-bs-target="#email" type="button" role="tab">
                         <i class="fas fa-envelope me-2"></i>Email
                     </button>
-                </li>
+                </li>-->
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="social-tab" data-bs-toggle="pill" data-bs-target="#social" type="button" role="tab">
                         <i class="fas fa-share-alt me-2"></i>Social Media
                     </button>
                 </li>
-                <li class="nav-item" role="presentation">
+                <!--<li class="nav-item" role="presentation">
                     <button class="nav-link" id="seo-tab" data-bs-toggle="pill" data-bs-target="#seo" type="button" role="tab">
                         <i class="fas fa-search me-2"></i>SEO
                     </button>
-                </li>
-                <li class="nav-item" role="presentation">
+                </li>-->
+                <!--<li class="nav-item" role="presentation">
                     <button class="nav-link" id="maintenance-tab" data-bs-toggle="pill" data-bs-target="#maintenance" type="button" role="tab">
                         <i class="fas fa-tools me-2"></i>Maintenance
                     </button>
-                </li>
+                </li>-->
             </ul>
         </div>
     </div>
@@ -275,7 +275,7 @@ $smtp_encryption = [
                             <div class="col-md-6">
                                 <label for="store_name" class="form-label">Store Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="store_name" name="store_name"
-                                       value="<?php echo htmlspecialchars($settings['store_name'] ?? ''); ?>" required>
+                                       value="<?php echo htmlspecialchars($settings['store_name'] ?? ''); ?>" required disabled>
                             </div>
                             <div class="col-md-6">
                                 <label for="store_email" class="form-label">Store Email <span class="text-danger">*</span></label>
@@ -306,7 +306,7 @@ $smtp_encryption = [
                                 <input type="number" class="form-control" id="shipping_cost" name="shipping_cost"
                                        value="<?php echo htmlspecialchars($settings['shipping_cost'] ?? '200'); ?>" step="0.01" min="0">
                             </div>
-                            <div class="col-md-6">
+                            <!--<div class="col-md-6">
                                 <label for="default_theme" class="form-label">Default Theme</label>
                                 <select class="form-select" id="default_theme" name="default_theme">
                                     <?php foreach ($themes as $key => $name): ?>
@@ -315,7 +315,7 @@ $smtp_encryption = [
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                            </div>
+                            </div>-->
                         </div>
                     </div>
                 </div>

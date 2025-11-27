@@ -178,9 +178,9 @@ $pending_count = $conn->query("SELECT COUNT(*) FROM contact_messages WHERE statu
                     </a>
                     <?php endif; ?>
 
-                    <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'settings.php' ? 'active' : ''; ?>" href="settings.php">
+                    <!--<a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'settings.php' ? 'active' : ''; ?>" href="settings.php">
                         <i class="fas fa-cog me-2"></i>Settings
-                    </a>
+                    </a>-->
                 </nav>
             </div>
 
