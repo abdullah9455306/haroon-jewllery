@@ -190,7 +190,7 @@ $priceRange = $conn->query("SELECT MIN(price) as min_price, MAX(price) as max_pr
                     <!-- Clear All Filters -->
                     <?php if (!empty($search) || !empty($category) || $min_price > 0 || $max_price < 1000000): ?>
                         <div class="mb-3">
-                            <a href="products.php" class="btn btn-outline-danger btn-sm w-100">
+                            <a href="<?php echo SITE_URL; ?>/products" class="btn btn-outline-danger btn-sm w-100">
                                 <i class="fas fa-times me-1"></i>Clear All Filters
                             </a>
                         </div>
@@ -228,7 +228,7 @@ $priceRange = $conn->query("SELECT MIN(price) as min_price, MAX(price) as max_pr
                                  class="flex-shrink-0 me-3" style="width: 60px; height: 60px; object-fit: cover;">
                             <div class="flex-grow-1">
                                 <h6 class="mb-1 small">
-                                    <a href="product-detail.php?id=<?php echo $featured['id']; ?>" class="text-decoration-none text-dark">
+                                    <a href="<?php echo SITE_URL; ?>/product-<?php echo $featured['id']; ?>" class="text-decoration-none text-dark">
                                         <?php echo htmlspecialchars($featured['name']); ?>
                                     </a>
                                 </h6>
@@ -322,7 +322,7 @@ $priceRange = $conn->query("SELECT MIN(price) as min_price, MAX(price) as max_pr
                                     <div class="card-img-overlay d-flex align-items-end justify-content-center"
                                          style="opacity: 0; transition: opacity 0.3s; background: rgba(0,0,0,0.1);">
                                         <div class="w-100 text-center">
-                                            <a href="product-detail.php?id=<?php echo $product['id']; ?>"
+                                            <a href="<?php echo SITE_URL; ?>/product-<?php echo $product['id']; ?>"
                                                class="btn btn-gold btn-sm w-75 mb-2">
                                                 <i class="fas fa-eye me-1"></i>Quick View
                                             </a>
@@ -345,7 +345,7 @@ $priceRange = $conn->query("SELECT MIN(price) as min_price, MAX(price) as max_pr
 
                                 <div class="card-body d-flex flex-column">
                                     <h6 class="card-title">
-                                        <a href="product-detail.php?id=<?php echo $product['id']; ?>" class="text-decoration-none text-dark">
+                                        <a href="<?php echo SITE_URL; ?>/product-<?php echo $product['id']; ?>" class="text-decoration-none text-dark">
                                             <?php echo htmlspecialchars($product['name']); ?>
                                         </a>
                                     </h6>
@@ -447,7 +447,7 @@ $priceRange = $conn->query("SELECT MIN(price) as min_price, MAX(price) as max_pr
                             No products are currently available.
                         <?php endif; ?>
                     </p>
-                    <a href="products.php" class="btn btn-gold">View All Products</a>
+                    <a href="<?php echo SITE_URL; ?>/products" class="btn btn-gold">View All Products</a>
                 </div>
             <?php endif; ?>
         </div>

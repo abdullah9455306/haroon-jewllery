@@ -9,15 +9,15 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: login');
     exit;
 }
 
 // Get order ID from URL
-$order_id = $_GET['order_id'] ?? 0;
+$order_id = $_GET['id'] ?? 0;
 
 if (!$order_id) {
-    header('Location: orders.php');
+    header('Location: orders');
     exit;
 }
 
@@ -36,7 +36,7 @@ $orderStmt->execute([$order_id, $_SESSION['user_id']]);
 $order = $orderStmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$order) {
-    header('Location: orders.php');
+    header('Location: orders');
     exit;
 }
 
@@ -193,10 +193,10 @@ require_once '../includes/header.php';
 
             <!-- Action Buttons -->
             <div class="text-center mt-5">
-                <a href="orders.php" class="btn btn-gold me-3">
+                <a href="<?php echo SITE_URL; ?>/orders" class="btn btn-gold me-3">
                     <i class="fas fa-list me-2"></i>View All Orders
                 </a>
-                <a href="products.php" class="btn btn-outline-dark me-3">
+                <a href="<?php echo SITE_URL; ?>/products" class="btn btn-outline-dark me-3">
                     <i class="fas fa-shopping-bag me-2"></i>Continue Shopping
                 </a>
                 <button onclick="window.print()" class="btn btn-outline-secondary">

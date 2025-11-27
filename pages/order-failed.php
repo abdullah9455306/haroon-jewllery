@@ -9,15 +9,15 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: login');
     exit;
 }
 
 // Get order ID from URL
-$order_id = $_GET['order_id'] ?? 0;
+$order_id = $_GET['id'] ?? 0;
 
 if (!$order_id) {
-    header('Location: orders.php');
+    header('Location: orders');
     exit;
 }
 
@@ -36,7 +36,7 @@ $orderStmt->execute([$order_id, $_SESSION['user_id']]);
 $order = $orderStmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$order) {
-    header('Location: orders.php');
+    header('Location: orders');
     exit;
 }
 
@@ -145,7 +145,7 @@ $failureReason = $failureReasons[$errorCode] ?? $failureReasons['999'];
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <div class="d-grid">
-                                <a href="checkout.php?retry_order=<?php echo $order_id; ?>" class="btn btn-gold btn-lg">
+                                <a href="<?php echo SITE_URL; ?>/checkout/retry_order/<?php echo $order_id; ?>" class="btn btn-gold btn-lg">
                                     <i class="fas fa-credit-card me-2"></i>Retry Payment
                                 </a>
                                 <small class="text-muted text-center mt-2 d-block">Try paying again with the same order</small>
@@ -153,7 +153,7 @@ $failureReason = $failureReasons[$errorCode] ?? $failureReasons['999'];
                         </div>
                         <div class="col-md-6 mb-3">
                             <div class="d-grid">
-                                <a href="cart.php" class="btn btn-outline-dark btn-lg">
+                                <a href="<?php echo SITE_URL; ?>/cart" class="btn btn-outline-dark btn-lg">
                                     <i class="fas fa-shopping-cart me-2"></i>Back to Cart
                                 </a>
                                 <small class="text-muted text-center mt-2 d-block">Review your cart items</small>
@@ -164,7 +164,7 @@ $failureReason = $failureReasons[$errorCode] ?? $failureReasons['999'];
                     <div class="row mt-3">
                         <div class="col-md-6 mb-3">
                             <div class="d-grid">
-                                <a href="products.php" class="btn btn-outline-primary btn-lg">
+                                <a href="<?php echo SITE_URL; ?>/products" class="btn btn-outline-primary btn-lg">
                                     <i class="fas fa-shopping-bag me-2"></i>Continue Shopping
                                 </a>
                                 <small class="text-muted text-center mt-2 d-block">Browse more products</small>
@@ -172,7 +172,7 @@ $failureReason = $failureReasons[$errorCode] ?? $failureReasons['999'];
                         </div>
                         <div class="col-md-6 mb-3">
                             <div class="d-grid">
-                                <a href="orders.php" class="btn btn-outline-secondary btn-lg">
+                                <a href="<?php echo SITE_URL; ?>/orders" class="btn btn-outline-secondary btn-lg">
                                     <i class="fas fa-list me-2"></i>View Orders
                                 </a>
                                 <small class="text-muted text-center mt-2 d-block">Check your order history</small>

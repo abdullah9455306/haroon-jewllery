@@ -184,7 +184,7 @@ $cartItems = array_slice($allCartItems, $offset, $itemsPerPage);
                     <i class="fas fa-shopping-cart fa-4x text-muted mb-4"></i>
                     <h4 class="text-muted">Your cart is empty</h4>
                     <p class="text-muted mb-4">Browse our collection and add some items to your cart</p>
-                    <a href="products.php" class="btn btn-gold">Continue Shopping</a>
+                    <a href="<?php echo SITE_URL; ?>/products" class="btn btn-gold">Continue Shopping</a>
                 </div>
             <?php else: ?>
                 <!-- Cart Items Count and Pagination Info -->
@@ -364,9 +364,9 @@ $cartItems = array_slice($allCartItems, $offset, $itemsPerPage);
                     </div>
 
                     <?php if($total > 0): ?>
-                        <a href="checkout.php" class="btn btn-gold w-100 mb-3">Proceed to Checkout</a>
+                        <a href="<?php echo SITE_URL; ?>/checkout" class="btn btn-gold w-100 mb-3">Proceed to Checkout</a>
                     <?php endif; ?>
-                    <a href="products.php" class="btn btn-outline-dark w-100">Continue Shopping</a>
+                    <a href="<?php echo SITE_URL; ?>/products" class="btn btn-outline-dark w-100">Continue Shopping</a>
                 </div>
             </div>
         </div>

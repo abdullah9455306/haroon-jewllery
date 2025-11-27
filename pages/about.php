@@ -17,7 +17,7 @@ require_once '../includes/header.php';
     <!-- Story Section -->
     <div class="row align-items-center mb-5">
         <div class="col-lg-4">
-            <img src="../assets/images/about-us.jpg" alt="Our Story" class="img-fluid rounded shadow" style="height: 400px; width: 100%; object-fit: none;">
+            <img src="<?php echo SITE_URL; ?>/assets/images/about-us.jpg" alt="Our Story" class="img-fluid rounded shadow" style="height: 400px; width: 100%; object-fit: none;">
         </div>
         <div class="col-lg-8">
             <div class="ps-lg-5">
@@ -281,7 +281,7 @@ require_once '../includes/header.php';
                             <p class="mb-0">info@haroonjewellery.com</p>
                         </div>
                     </div>
-                    <a href="contact.php" class="btn btn-gold mt-3">Get Directions</a>
+                    <a href="<?php echo SITE_URL; ?>/contact" class="btn btn-gold mt-3">Get Directions</a>
                 </div>
             </div>
         </div>

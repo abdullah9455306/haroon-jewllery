@@ -4,7 +4,7 @@ require_once '../config/constants.php';
 
 // Check if user is logged in BEFORE including header
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: login');
     exit;
 }
 
@@ -28,7 +28,7 @@ if ($user_stmt->execute([$user_id])) {
 
 // If user not found, redirect to login
 if (!$user) {
-    echo '<script>window.location.href = "login.php";</script>';
+    echo '<script>window.location.href = "login";</script>';
     exit;
 }
 
@@ -178,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <a href="#password" class="list-group-item list-group-item-action">
                             <i class="fas fa-lock me-2"></i>Change Password
                         </a>
-                        <a href="logout.php" class="list-group-item list-group-item-action text-danger">
+                        <a href="<?php echo SITE_URL; ?>/logout" class="list-group-item list-group-item-action text-danger">
                             <i class="fas fa-sign-out-alt me-2"></i>Logout
                         </a>
                     </div>
@@ -332,7 +332,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                 </span>
                                             </td>
                                             <td>
-                                                <a href="order-details.php?id=<?php echo $order['id']; ?>" class="btn btn-sm btn-outline-primary">
+                                                <a href="<?php echo SITE_URL; ?>/order-details/<?php echo $order['id']; ?>" class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-eye me-1"></i>View
                                                 </a>
                                             </td>
@@ -343,14 +343,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
 
                         <div class="text-center mt-3">
-                            <a href="orders.php" class="btn btn-outline-gold">View All Orders</a>
+                            <a href="<?php echo SITE_URL; ?>/orders" class="btn btn-outline-gold">View All Orders</a>
                         </div>
                     <?php else: ?>
                         <div class="text-center py-4">
                             <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
                             <h5 class="text-muted">No orders yet</h5>
                             <p class="text-muted mb-3">You haven't placed any orders with us yet.</p>
-                            <a href="products.php" class="btn btn-gold">Start Shopping</a>
+                            <a href="<?php echo SITE_URL; ?>/products" class="btn btn-gold">Start Shopping</a>
                         </div>
                     <?php endif; ?>
                 </div>

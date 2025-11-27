@@ -26,7 +26,7 @@ session_start();
     <h3>Actions:</h3>
     <a href="?clear=1">Clear Session</a> |
     <a href="?set_test=1">Set Test user_id</a> |
-    <a href="products.php">Go to Products</a>
+    <a href="<?php echo SITE_URL; ?>/products">Go to Products</a>
 
     <?php
     if (isset($_GET['clear'])) {

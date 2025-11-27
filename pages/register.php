@@ -12,7 +12,7 @@ $pageTitle = "Create Account";
 
 // Redirect if already logged in using JavaScript
 if (isset($_SESSION['user_id'])) {
-    echo '<script>window.location.href = "profile.php";</script>';
+    echo '<script>window.location.href = "profile";</script>';
     exit;
 }
 
@@ -150,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <?php if (isset($redirect_to_profile) && $redirect_to_profile): ?>
                             <script>
                                 setTimeout(function() {
-                                    window.location.href = 'profile.php?welcome=1';
+                                    window.location.href = 'profile?welcome=1';
                                 }, 2000); // Redirect after 2 seconds
                             </script>
                         <?php endif; ?>
@@ -280,7 +280,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <input class="form-check-input" type="checkbox" id="agree_terms" name="agree_terms" required>
                                 <label class="form-check-label" for="agree_terms">
                                     I agree to the Terms and Conditions
-                                    and <a href="privacy.php" target="_blank" class="text-gold">Privacy Policy</a> *
+                                    and <a href="<?php echo SITE_URL; ?>/privacy-policy" target="_blank" class="text-gold">Privacy Policy</a> *
                                 </label>
                                 <div class="invalid-feedback">You must agree to the terms and conditions.</div>
                             </div>
@@ -297,7 +297,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="text-center mt-4">
                             <p class="text-muted mb-0">
                                 Already have an account?
-                                <a href="login.php" class="text-gold fw-bold text-decoration-none">Sign In</a>
+                                <a href="<?php echo SITE_URL; ?>/login" class="text-gold fw-bold text-decoration-none">Sign In</a>
                             </p>
                         </div>
                     </form>

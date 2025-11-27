@@ -288,7 +288,7 @@ if (isset($_SESSION['user_id'])) {
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-dark shadow-sm sticky-top">
         <div class="container-fluid">
-            <a class="navbar-brand brand-font" href="<?php echo SITE_URL; ?>/index.php">
+            <a class="navbar-brand brand-font" href="<?php echo SITE_URL; ?>/">
                 <img src="<?php echo SITE_URL; ?>/assets/images/logo.webp" style="width: 130px;"/>
             </a>
 
@@ -299,7 +299,7 @@ if (isset($_SESSION['user_id'])) {
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo SITE_URL; ?>/index.php">Home</a>
+                        <a class="nav-link" href="<?php echo SITE_URL; ?>/">Home</a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" role="button" data-bs-toggle="dropdown">
@@ -312,7 +312,7 @@ if (isset($_SESSION['user_id'])) {
                                 foreach ($mainCategories as $category):
                             ?>
                             <li>
-                                <a class="dropdown-item" href="<?php echo SITE_URL; ?>/pages/products.php?category=<?php echo urlencode($category['slug']); ?>">
+                                <a class="dropdown-item" href="<?php echo SITE_URL; ?>/category/<?php echo urlencode($category['slug']); ?>">
                                     <?php echo htmlspecialchars($category['name']); ?>
                                 </a>
                             </li>
@@ -325,13 +325,13 @@ if (isset($_SESSION['user_id'])) {
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo SITE_URL; ?>/pages/products.php">All Products</a>
+                        <a class="nav-link" href="<?php echo SITE_URL; ?>/products">All Products</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo SITE_URL; ?>/pages/about.php">About Us</a>
+                        <a class="nav-link" href="<?php echo SITE_URL; ?>/about-us">About Us</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo SITE_URL; ?>/pages/contact.php">Contact</a>
+                        <a class="nav-link" href="<?php echo SITE_URL; ?>/contact">Contact</a>
                     </li>
                 </ul>
 
@@ -349,14 +349,14 @@ if (isset($_SESSION['user_id'])) {
                                 <i class="fas fa-user me-1"></i> <?php echo htmlspecialchars($_SESSION['user_name'] ?? 'My Account'); ?>
                             </a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/pages/profile.php">
+                                <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/profile">
                                     <i class="fas fa-user-circle me-2"></i>Profile
                                 </a></li>
-                                <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/pages/orders.php">
+                                <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/orders">
                                     <i class="fas fa-shopping-bag me-2"></i>My Orders
                                 </a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/pages/logout.php">
+                                <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/logout">
                                     <i class="fas fa-sign-out-alt me-2"></i>Logout
                                 </a></li>
                             </ul>
@@ -364,17 +364,17 @@ if (isset($_SESSION['user_id'])) {
                     <?php else: ?>
                         <!-- Guest user menu -->
                         <div class="d-flex align-items-center">
-                            <a href="<?php echo SITE_URL; ?>/pages/login.php" class="nav-link me-3">
+                            <a href="<?php echo SITE_URL; ?>/login" class="nav-link me-3">
                                 <i class="fas fa-sign-in-alt me-1"></i> Login
                             </a>
-                            <a href="<?php echo SITE_URL; ?>/pages/register.php" class="nav-link">
+                            <a href="<?php echo SITE_URL; ?>/register" class="nav-link">
                                 <i class="fas fa-user-plus me-1"></i> Register
                             </a>
                         </div>
                     <?php endif; ?>
 
                     <!-- Shopping Cart -->
-                    <a href="<?php echo SITE_URL; ?>/pages/cart.php" class="btn btn-outline-dark position-relative ms-3" id="cartLink">
+                    <a href="<?php echo SITE_URL; ?>/cart" class="btn btn-outline-dark position-relative ms-3" id="cartLink">
                         <i class="fas fa-shopping-cart"></i>
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-badge" id="cartBadge">
                             <?php echo $cart_count; ?>
@@ -399,7 +399,7 @@ if (isset($_SESSION['user_id'])) {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Continue Shopping</button>
-                    <a href="<?php echo SITE_URL; ?>/pages/cart.php" class="btn btn-gold">View Cart</a>
+                    <a href="<?php echo SITE_URL; ?>/cart" class="btn btn-gold">View Cart</a>
                 </div>
             </div>
         </div>

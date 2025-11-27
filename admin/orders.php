@@ -443,7 +443,7 @@ function displayOrderDetailsHTML($order, $items, $payment, $statusInquiryResult 
                                         <h6 class="mb-1"><?php echo htmlspecialchars($item['product_name']); ?></h6>
                                         <?php if ($item['product_slug']): ?>
                                         <small class="text-muted">
-                                            <a href="../pages/product-detail.php?id=<?php echo $item['product_id']; ?>" target="_blank">
+                                            <a href="../product-<?php echo $item['product_id']; ?>" target="_blank">
                                                 View Product
                                             </a>
                                         </small>

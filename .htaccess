@@ -1,0 +1,55 @@
+RewriteEngine On
+
+# Remove .php extension
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^(.*)$ $1.php [L]
+
+# Home Page
+RewriteRule ^/?$ index.php [L]
+
+# Product pages
+RewriteRule ^product-([0-9]+)/?$ pages/product-detail.php?id=$1 [L]
+RewriteRule ^products/?$ pages/products.php [L]
+
+# Category pages
+RewriteRule ^category/([a-zA-Z0-9\-_+%&'()]+)/?$ pages/products.php?category=$1 [L,QSA,B]
+
+# Static pages
+RewriteRule ^about-us?$ pages/about.php [L]
+RewriteRule ^contact?$ pages/contact.php [L]
+RewriteRule ^privacy-policy?$ pages/privacy.php [L]
+RewriteRule ^register?$ pages/register.php [L]
+RewriteRule ^login?$ pages/login.php [L]
+RewriteRule ^logout?$ pages/logout.php [L]
+RewriteRule ^profile?$ pages/profile.php [L]
+
+# Order pages
+RewriteRule ^orders?$ pages/orders.php [L]
+RewriteRule ^order-details/([a-zA-Z0-9\-_+%&'()]+)/?$ pages/order-details.php?id=$1 [L]
+
+RewriteRule ^order-success/([a-zA-Z0-9\-_+%&'()]+)/?$ pages/order-success.php?id=$1 [L]
+RewriteRule ^order-failed/([a-zA-Z0-9\-_+%&'()]+)/?$ pages/order-failed.php?id=$1 [L,QSA]
+
+# Cart and Checkout pages
+RewriteRule ^cart?$ pages/cart.php [L]
+RewriteRule ^checkout?$ pages/checkout.php [L]
+RewriteRule ^process-order?$ pages/process-order.php [L]
+RewriteRule ^checkout/retry_order/([a-zA-Z0-9\-_+%&'()]+)/?$ pages/order-failed.php?id=$1 [L]
+
+
+
+
+
+# User pages
+RewriteRule ^my-account/?$ pages/user_dashboard.php [L]
+RewriteRule ^my-orders/?$ pages/orders.php [L]
+RewriteRule ^wishlist/?$ pages/wishlist.php [L]
+
+
+RewriteRule ^order-confirmation/?$ pages/order_success.php [L]
+
+# Admin pages (make them less obvious)
+RewriteRule ^admin-dashboard/?$ admin/index.php [L]
+RewriteRule ^manage-products/?$ admin/products.php [L]
+RewriteRule ^manage-orders/?$ admin/orders.php [L]

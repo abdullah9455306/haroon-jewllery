@@ -47,14 +47,14 @@ if (empty($sliders)) {
             'description' => 'Discover our stunning rings jewelry crafted with precision and passion',
             'image' => 'assets/images/slider1.png',
             'button_text' => 'Shop Now',
-            'button_link' => 'pages/products.php?category=rings'
+            'button_link' => SITE_URL . '/category/rings'
         ],
         [
             'title' => 'Traditional Gold Jewelry',
             'description' => 'Beautiful traditional designs that celebrate our heritage',
             'image' => 'assets/images/slider2.png',
             'button_text' => 'Shop Now',
-            'button_link' => 'pages/products.php'
+            'button_link' => SITE_URL . '/products'
         ]
     ];
 }
@@ -127,7 +127,7 @@ if (empty($sliders)) {
                         ?>
                             <div class="swiper-slide">
                                 <div class="category-slide-card text-center">
-                                    <a href="pages/products.php?category=<?php echo urlencode($category['slug']); ?>" class="text-decoration-none">
+                                    <a href="<?php echo SITE_URL; ?>/category/<?php echo urlencode($category['slug']); ?>" class="text-decoration-none">
                                         <div class="category-image-container">
                                             <img src="<?php echo $category_image; ?>"
                                                  alt="<?php echo htmlspecialchars($category['name']); ?>"
@@ -158,7 +158,7 @@ if (empty($sliders)) {
             <!-- Fallback static categories if no categories in database -->
             <div class="row">
                 <div class="col-md-3 col-6 mb-4">
-                    <a href="pages/products.php?category=rings" class="text-decoration-none">
+                    <a href="<?php echo SITE_URL; ?>/category/rings" class="text-decoration-none">
                         <div class="card category-card text-center border-0">
                             <div class="card-body">
                                 <i class="fas fa-ring fa-3x text-gold mb-3"></i>
@@ -168,7 +168,7 @@ if (empty($sliders)) {
                     </a>
                 </div>
                 <div class="col-md-3 col-6 mb-4">
-                    <a href="pages/products.php?category=necklaces" class="text-decoration-none">
+                    <a href="<?php echo SITE_URL; ?>/category/necklaces" class="text-decoration-none">
                         <div class="card category-card text-center border-0">
                             <div class="card-body">
                                 <i class="fas fa-gem fa-3x text-gold mb-3"></i>
@@ -178,7 +178,7 @@ if (empty($sliders)) {
                     </a>
                 </div>
                 <div class="col-md-3 col-6 mb-4">
-                    <a href="pages/products.php?category=earrings" class="text-decoration-none">
+                    <a href="<?php echo SITE_URL; ?>/category/earrings" class="text-decoration-none">
                         <div class="card category-card text-center border-0">
                             <div class="card-body">
                                 <i class="fas fa-star fa-3x text-gold mb-3"></i>
@@ -188,7 +188,7 @@ if (empty($sliders)) {
                     </a>
                 </div>
                 <div class="col-md-3 col-6 mb-4">
-                    <a href="pages/products.php?category=bracelets" class="text-decoration-none">
+                    <a href="<?php echo SITE_URL; ?>/category/bracelets" class="text-decoration-none">
                         <div class="card category-card text-center border-0">
                             <div class="card-body">
                                 <i class="fas fa-circle fa-3x text-gold mb-3"></i>
@@ -227,7 +227,7 @@ if (empty($sliders)) {
                                 <?php endif; ?>
                                 <div class="card-img-overlay d-flex align-items-end justify-content-center" style="transition: opacity 0.3s;">
                                     <div class="w-100 text-center">
-                                        <a href="pages/product-detail.php?id=<?php echo $product['id']; ?>" class="btn btn-gold btn-sm w-75 mb-2">
+                                        <a href="<?php echo SITE_URL; ?>/product-<?php echo $product['id']; ?>" class="btn btn-gold btn-sm w-75 mb-2">
                                             Quick View
                                         </a>
                                         <?php if($product['stock_quantity'] > 0): ?>
@@ -261,7 +261,7 @@ if (empty($sliders)) {
                 <!-- Fallback if no featured products -->
                 <div class="col-12 text-center">
                     <p class="text-muted">No featured products available at the moment.</p>
-                    <a href="pages/products.php" class="btn btn-gold">Browse All Products</a>
+                    <a href="<?php echo SITE_URL; ?>/products" class="btn btn-gold">Browse All Products</a>
                 </div>
             <?php endif; ?>
         </div>

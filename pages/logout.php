@@ -249,10 +249,10 @@ session_destroy();
 
         <!-- Action Buttons -->
         <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-            <a href="../index.php" class="btn btn-gold me-md-2">
+            <a href="<?php echo SITE_URL; ?>/" class="btn btn-gold me-md-2">
                 <i class="fas fa-home me-2"></i>Back to Home
             </a>
-            <a href="login.php" class="btn btn-outline-gold">
+            <a href="<?php echo SITE_URL; ?>/login" class="btn btn-outline-gold">
                 <i class="fas fa-sign-in-alt me-2"></i>Login Again
             </a>
         </div>
@@ -277,9 +277,9 @@ session_destroy();
         <div class="mt-4">
             <small class="text-muted">
                 Need help?
-                <a href="contact.php" class="text-gold text-decoration-none">Contact Support</a>
+                <a href="<?php echo SITE_URL; ?>/contact" class="text-gold text-decoration-none">Contact Support</a>
                 or
-                <a href="privacy.php" class="text-gold text-decoration-none">View Privacy Policy</a>
+                <a href="<?php echo SITE_URL; ?>/privacy-policy" class="text-gold text-decoration-none">View Privacy Policy</a>
             </small>
         </div>
     </div>
@@ -297,7 +297,7 @@ session_destroy();
 
                 if (countdown <= 0) {
                     clearInterval(countdownInterval);
-                    window.location.href = '../index.php';
+                    window.location.href = '<?php echo SITE_URL; ?>/';
                 }
             }, 1000);
 

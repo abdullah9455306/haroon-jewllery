@@ -10,13 +10,13 @@ $conn = $db->getConnection();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: login');
     exit;
 }
 
 // Check if order ID is provided
 if (!isset($_GET['id']) || empty($_GET['id'])) {
-    header('Location: orders.php');
+    header('Location: orders');
     exit;
 }
 
@@ -38,7 +38,7 @@ $order = $order_stmt->fetch(PDO::FETCH_ASSOC);
 
 // If order not found or doesn't belong to user, redirect
 if (!$order) {
-    header('Location: orders.php');
+    header('Location: orders');
     exit;
 }
 
@@ -99,7 +99,7 @@ $current_status = $status_config[$order['order_status']] ?? ['class' => 'bg-seco
                     <p class="text-muted mb-0">Order #<?php echo $order['order_number']; ?></p>
                 </div>
                 <div class="btn-group">
-                    <a href="orders.php" class="btn btn-outline-dark">
+                    <a href="<?php echo SITE_URL; ?>/orders" class="btn btn-outline-dark">
                         <i class="fas fa-arrow-left me-2"></i>Back to Orders
                     </a>
                     <?php if ($order['order_status'] === 'pending'): ?>
@@ -334,7 +334,7 @@ $current_status = $status_config[$order['order_status']] ?? ['class' => 'bg-seco
                                         </td>
                                         <td>
                                             <?php if (!empty($item['slug'])): ?>
-                                                <a href="product-detail.php?id=<?php echo $item['product_id']; ?>"
+                                                <a href="<?php echo SITE_URL; ?>/product-<?php echo $item['product_id']; ?>"
                                                    class="btn btn-sm btn-gold">
                                                     <i class="fas fa-eye me-1"></i>View Product
                                                 </a>
@@ -415,7 +415,7 @@ $current_status = $status_config[$order['order_status']] ?? ['class' => 'bg-seco
                         <div class="col-md-6">
                             <h6>Contact Support</h6>
                             <p class="text-muted mb-3">If you have any questions about your order, our support team is here to help.</p>
-                            <a href="contact.php" class="btn btn-gold">
+                            <a href="<?php echo SITE_URL; ?>/contact" class="btn btn-gold">
                                 <i class="fas fa-envelope me-2"></i>Contact Support
                             </a>
                         </div>

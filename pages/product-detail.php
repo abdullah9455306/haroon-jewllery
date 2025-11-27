@@ -10,7 +10,7 @@ $conn = $db->getConnection();
 // Get product ID from URL and validate EARLY
 $product_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 if ($product_id <= 0) {
-    header('Location: products.php');
+    header('Location: products');
     exit;
 }
 
@@ -26,7 +26,7 @@ $product = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Redirect if product not found - BEFORE any output
 if (!$product) {
-    header('Location: products.php');
+    header('Location: products');
     exit;
 }
 
@@ -68,11 +68,11 @@ $main_image = !empty($product_images) ? $product_images[0]['image_path'] : ($pro
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="../index.php">Home</a></li>
-            <li class="breadcrumb-item"><a href="products.php">Products</a></li>
+            <li class="breadcrumb-item"><a href="<?php echo SITE_URL; ?>/">Home</a></li>
+            <li class="breadcrumb-item"><a href="<?php echo SITE_URL; ?>/products">Products</a></li>
             <?php if (!empty($product['category_name'])): ?>
                 <li class="breadcrumb-item">
-                    <a href="products.php?category=<?php echo urlencode($product['category_name']); ?>">
+                    <a href="<?php echo SITE_URL; ?>/category/<?php echo urlencode($product['category_name']); ?>">
                         <?php echo htmlspecialchars($product['category_name']); ?>
                     </a>
                 </li>
@@ -428,7 +428,7 @@ $main_image = !empty($product_images) ? $product_images[0]['image_path'] : ($pro
 
                                     <div class="card-img-overlay d-flex align-items-end justify-content-center" style="opacity: 0;">
                                         <div class="w-100 text-center">
-                                            <a href="product-detail.php?id=<?php echo $related['id']; ?>" class="btn btn-gold btn-sm w-75 mb-2">
+                                            <a href="<?php echo SITE_URL; ?>/product-<?php echo $related['id']; ?>" class="btn btn-gold btn-sm w-75 mb-2">
                                                 Quick View
                                             </a>
                                             <?php if ($related['stock_quantity'] > 0): ?>

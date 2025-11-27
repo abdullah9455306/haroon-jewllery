@@ -9,8 +9,8 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    $_SESSION['redirect_url'] = 'checkout.php';
-    header('Location: login.php');
+    $_SESSION['redirect_url'] = 'checkout';
+    header('Location: login');
     exit;
 }
 
@@ -34,7 +34,7 @@ if (isset($_SESSION['user_id'])) {
 
 // Redirect to cart if empty
 if ($cartIsEmpty) {
-    header('Location: cart.php');
+    header('Location: cart');
     exit;
 }
 
@@ -51,7 +51,7 @@ $apiVersion = $jazzcash->getApiVersion();
         <div class="col-lg-8">
             <h2 class="mb-4 brand-font">Checkout</h2>
 
-            <form id="checkoutForm" action="process-order.php" method="POST">
+            <form id="checkoutForm" action="<?php echo SITE_URL; ?>/process-order" method="POST">
                 <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">Shipping Information</h5>

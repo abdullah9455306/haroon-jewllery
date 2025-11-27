@@ -12,12 +12,12 @@ if (session_status() === PHP_SESSION_NONE) {
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     $_SESSION['error'] = 'Please login to complete your order.';
-    header('Location: login.php');
+    header('Location: login');
     exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: checkout.php');
+    header('Location: checkout');
     exit;
 }
 
@@ -233,15 +233,15 @@ try {
 
         if ($paymentResult['success']) {
             $_SESSION['success'] = 'Payment completed successfully! Your order is being processed.';
-            header('Location: order-success.php?order_id=' . $orderId);
+            header('Location: ' . SITE_URL . '/order-success/' . $orderId);
         } else {
             $_SESSION['error'] = 'Payment failed: ' . $paymentResult['message'];
-            header('Location: order-failed.php?order_id=' . $orderId);
+            header('Location: ' . SITE_URL . '/order-failed/' . $orderId);
         }
         exit;
     } else {
         $_SESSION['error'] = 'No response received from payment gateway.';
-        header('Location: checkout.php');
+        header('Location: checkout');
         exit;
     }
 
@@ -252,7 +252,7 @@ try {
     }
 
     $_SESSION['error'] = $e->getMessage();
-    header('Location: checkout.php');
+    header('Location: checkout');
     exit;
 }
 ?>

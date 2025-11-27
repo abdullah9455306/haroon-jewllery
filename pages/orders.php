@@ -9,7 +9,7 @@ $conn = $db->getConnection();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: login');
     exit;
 }
 
@@ -198,7 +198,7 @@ $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
                     <h1 class="h3 brand-font mb-1">My Orders</h1>
                     <p class="text-muted mb-0">Track and manage your orders</p>
                 </div>
-                <a href="products.php" class="btn btn-gold">
+                <a href="<?php echo SITE_URL; ?>/products" class="btn btn-gold">
                     <i class="fas fa-shopping-bag me-2"></i>Continue Shopping
                 </a>
             </div>
@@ -255,7 +255,7 @@ $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
                                     <a href="?<?php echo http_build_query(array_merge($_GET, ['date_to' => ''])); ?>" class="text-white ms-1">×</a>
                                 </span>
                             <?php endif; ?>
-                            <a href="orders.php" class="btn btn-sm btn-outline-secondary">Clear All</a>
+                            <a href="<?php echo SITE_URL; ?>/orders" class="btn btn-sm btn-outline-secondary">Clear All</a>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -335,7 +335,7 @@ $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
                                             </td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
-                                                    <a href="order-details.php?id=<?php echo $order['id']; ?>" class="btn btn-gold">
+                                                    <a href="<?php echo SITE_URL; ?>/order-details/<?php echo $order['id']; ?>" class="btn btn-gold">
                                                         <i class="fas fa-eye me-1"></i>View
                                                     </a>
                                                     <?php if ($order['order_status'] === 'pending'): ?>
@@ -400,12 +400,12 @@ $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
                         <p class="text-muted mb-4">
                             <?php if (!empty($status_filter) || !empty($date_from) || !empty($date_to)): ?>
                                 Try adjusting your search criteria or
-                                <a href="orders.php" class="text-gold">clear all filters</a>.
+                                <a href="<?php echo SITE_URL; ?>/orders" class="text-gold">clear all filters</a>.
                             <?php else: ?>
                                 You haven't placed any orders with us yet.
                             <?php endif; ?>
                         </p>
-                        <a href="products.php" class="btn btn-gold btn-lg">
+                        <a href="<?php echo SITE_URL; ?>/products" class="btn btn-gold btn-lg">
                             <i class="fas fa-shopping-bag me-2"></i>Start Shopping
                         </a>
                     </div>

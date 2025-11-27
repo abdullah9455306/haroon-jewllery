@@ -4,7 +4,7 @@ session_start();
 
 // Redirect if already logged in - MUST be before any output
 if (isset($_SESSION['user_id'])) {
-    header("Location: profile.php");
+    header("Location: profile");
     exit;
 }
 
@@ -96,12 +96,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $updateStmt->execute([$user['id']]);
 
                 // Redirect to intended page or profile
-                $redirect_url = $_SESSION['redirect_url'] ?? 'profile.php';
+                $redirect_url = $_SESSION['redirect_url'] ?? 'profile';
                 unset($_SESSION['redirect_url']);
 
                 // If there was a pending cart product, redirect to cart page
                 if (!empty($pending_cart_product)) {
-                    $redirect_url = 'cart.php';
+                    $redirect_url = 'cart';
                 }
 
                 // Use header redirect for successful login
@@ -220,7 +220,7 @@ require_once '../includes/header.php';
                         <div class="text-center">
                             <p class="text-muted mb-0">
                                 Don't have an account?
-                                <a href="register.php" class="text-gold fw-bold text-decoration-none">Create Account</a>
+                                <a href="<?php echo SITE_URL; ?>/register" class="text-gold fw-bold text-decoration-none">Create Account</a>
                             </p>
                         </div>
                     </form>

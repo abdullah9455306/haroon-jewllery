@@ -16,11 +16,11 @@
             <div class="col-lg-2 col-md-6 mb-4">
                 <h5 class="mb-4">Quick Links</h5>
                 <ul class="list-unstyled">
-                    <li class="mb-2"><a href="index.php">Home</a></li>
-                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/pages/products.php">Products</a></li>
-                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/pages/about.php">About Us</a></li>
-                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/pages/contact.php">Contact</a></li>
-                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/pages/privacy.php">Privacy Policy</a></li>
+                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/">Home</a></li>
+                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/products">Products</a></li>
+                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/about-us">About Us</a></li>
+                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/contact">Contact</a></li>
+                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/privacy-policy">Privacy Policy</a></li>
                 </ul>
             </div>
 
@@ -34,7 +34,7 @@
                         foreach ($popularCategories as $category):
                     ?>
                     <li class="mb-2">
-                        <a href="<?php echo SITE_URL; ?>/pages/products.php?category=<?php echo urlencode($category['slug']); ?>">
+                        <a href="<?php echo SITE_URL; ?>/category/<?php echo urlencode($category['slug']); ?>">
                             <?php echo htmlspecialchars($category['name']); ?>
                         </a>
                     </li>
@@ -43,11 +43,11 @@
                     else:
                     ?>
                     <!-- Fallback if no categories found -->
-                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/pages/products.php?category=rings">Rings</a></li>
-                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/pages/products.php?category=necklaces">Necklaces</a></li>
-                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/pages/products.php?category=earrings">Earrings</a></li>
-                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/pages/products.php?category=bracelets">Bracelets</a></li>
-                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/pages/products.php?category=bangles">Bangles</a></li>
+                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/category/rings">Rings</a></li>
+                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/category/necklaces">Necklaces</a></li>
+                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/category/earrings">Earrings</a></li>
+                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/category/bracelets">Bracelets</a></li>
+                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/category/bangles">Bangles</a></li>
                     <?php endif; ?>
                 </ul>
             </div>
