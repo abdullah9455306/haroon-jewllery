@@ -351,16 +351,16 @@ $cartItems = array_slice($allCartItems, $offset, $itemsPerPage);
                     </div>
                     <div class="d-flex justify-content-between mb-3">
                         <span>Shipping:</span>
-                        <span id="shipping"><?php echo $total > 0 ? CURRENCY . ' 200' : CURRENCY . ' 0'; ?></span>
+                        <span id="shipping"><?php echo $total > 0 ? CURRENCY . ' 0' : CURRENCY . ' 0'; ?></span>
                     </div>
                     <div class="d-flex justify-content-between mb-3">
-                        <span>Tax (5%):</span>
-                        <span id="tax"><?php echo CURRENCY . ' ' . number_format($total * 0.05); ?></span>
+                        <span>Tax:</span>
+                        <span id="tax"><?php echo CURRENCY . ' ' . number_format($total * 0.00); ?></span>
                     </div>
                     <hr>
                     <div class="d-flex justify-content-between mb-4">
                         <strong>Total:</strong>
-                        <strong id="grand-total"><?php echo CURRENCY . ' ' . number_format($total + ($total > 0 ? 200 : 0) + ($total * 0.05)); ?></strong>
+                        <strong id="grand-total"><?php echo CURRENCY . ' ' . number_format($total + ($total > 0 ? 0 : 0) + ($total * 0.00)); ?></strong>
                     </div>
 
                     <?php if($total > 0): ?>
@@ -448,8 +448,8 @@ document.addEventListener('DOMContentLoaded', function() {
             subtotal += itemTotal;
         });
 
-        const shipping = subtotal > 0 ? 200 : 0;
-        const tax = subtotal * 0.05;
+        const shipping = subtotal > 0 ? 0 : 0;
+        const tax = subtotal * 0.00;
         const grandTotal = subtotal + shipping + tax;
 
         document.getElementById('subtotal').textContent = '<?php echo CURRENCY; ?> ' + subtotal.toLocaleString();

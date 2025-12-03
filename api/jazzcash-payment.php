@@ -32,7 +32,7 @@ class JazzCashPayment {
 
     public function getBaseUrl() {
         if ($this->environment === 'production') {
-            return 'https://jazzcash.com.pk/';
+            return 'https://payments.jazzcash.com.pk/';
         } else {
             return 'https://sandbox.jazzcash.com.pk/';
         }
@@ -94,30 +94,55 @@ class JazzCashPayment {
         $pp_TxnExpiryDateTime = $expiryDateTime->format('YmdHis');
         $pp_TxnRefNo = 'T'.$pp_TxnDateTime;
 
-        $pp_Amount = $orderData['amount'];
+        $pp_Amount = $orderData['amount']*100;
 
         $data = [
-            'pp_Version' => '1.1',
-            'pp_TxnType' => 'MWALLET',
-            'pp_Language' => 'EN',
-            'pp_MerchantID' => $this->merchantId,
-            'pp_SubMerchantID' => '',
-            'pp_Password' => $this->password,
-            'pp_BankID' => '',
-            'pp_ProductID' => '',
-            'pp_TxnRefNo' => $pp_TxnRefNo,
-            'pp_Amount' => $pp_Amount,
-            'pp_TxnCurrency' => 'PKR',
-            'pp_TxnDateTime' => $pp_TxnDateTime,
-            'pp_BillReference' => 'billref',
-            'pp_Description' => $orderData['description'],
-            'pp_TxnExpiryDateTime' => $pp_TxnExpiryDateTime,
-            'pp_SecureHash' => '',
-            'ppmpf_1' => $orderData['mobile_number'],
-            'ppmpf_2' => '',
-            'ppmpf_3' => '',
-            'ppmpf_4' => '',
-            'ppmpf_5' => ''
+//             'pp_Version' => '1.1',
+//             'pp_TxnType' => 'MWALLET',
+//             'pp_Language' => 'EN',
+//             'pp_MerchantID' => $this->merchantId,
+//             'pp_SubMerchantID' => '',
+//             'pp_Password' => $this->password,
+//             'pp_BankID' => '',
+//             'pp_ProductID' => '',
+//             'pp_TxnRefNo' => $pp_TxnRefNo,
+//             'pp_Amount' => $pp_Amount,
+//             'pp_TxnCurrency' => 'PKR',
+//             'pp_TxnDateTime' => $pp_TxnDateTime,
+//             'pp_BillReference' => 'billref',
+//             'pp_Description' => $orderData['description'],
+//             'pp_TxnExpiryDateTime' => $pp_TxnExpiryDateTime,
+//             'pp_SecureHash' => '',
+//             'pp_ReturnURL' => $this->returnUrl,
+//             'ppmpf_1' => $orderData['mobile_number'],
+//             'ppmpf_2' => '',
+//             'ppmpf_3' => '',
+//             'ppmpf_4' => '',
+//             'ppmpf_5' => '',
+
+            "pp_Language" => "EN",
+            "pp_MerchantID" => $this->merchantId,
+            "pp_SubMerchantID" => "",
+            "pp_Password" => $this->password,
+            "pp_TxnRefNo" => $pp_TxnRefNo,
+            "pp_MobileNumber" => $orderData['mobile_number'],
+            "pp_Amount" => $pp_Amount,
+            "pp_Version" => "1.1",
+            "pp_TxnType" => "MWALLET",
+            "pp_BankID" => "",
+            "pp_ProductID" => "",
+            "pp_TxnCurrency" => "PKR",
+            "pp_TxnDateTime" => $pp_TxnDateTime,
+            "pp_BillReference" => "billRef",
+            "pp_Description" => $orderData['description'],
+            "pp_TxnExpiryDateTime" => $pp_TxnExpiryDateTime,
+            "pp_ReturnURL" => $this->returnUrl,
+            "pp_SecureHash" => "",
+            "ppmpf_1" => $orderData['mobile_number'],
+            "ppmpf_2" => "",
+            "ppmpf_3" => "",
+            "ppmpf_4" => "",
+            "ppmpf_5" => ""
         ];
 
         $data['pp_SecureHash'] = $this->generateHash($data);
@@ -125,7 +150,7 @@ class JazzCashPayment {
         return [
             'data' => $data,
             'txn_ref_no' => $pp_TxnRefNo,
-            'payment_url' => $this->getBaseUrl() . 'ApplicationAPI/API/2.0/Purchase/DoMWalletTransaction'
+            'payment_url' => $this->getBaseUrl() . 'ApplicationAPI/API/Payment/DoTransaction'
         ];
     }
 
@@ -140,7 +165,7 @@ class JazzCashPayment {
         $pp_TxnExpiryDateTime = $expiryDateTime->format('YmdHis');
         $pp_TxnRefNo = 'T'.$pp_TxnDateTime;
 
-        $pp_Amount = $orderData['amount'];
+        $pp_Amount = $orderData['amount']*100;
 
         $data = [
             'pp_Language' => 'EN',
@@ -219,6 +244,10 @@ class JazzCashPayment {
     }
 
     public function verifyResponse($postData) {
+//       echo '<pre>';
+//       print_r($postData);
+//       echo '</pre>';
+//       exit;
       if (!$this->verifyResponseHash($postData)) {
                 return [
                     'success' => false,

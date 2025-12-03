@@ -110,7 +110,7 @@ $apiVersion = $jazzcash->getApiVersion();
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <img
-                                        src="<?php echo SITE_URL; ?>/assets/images/jazz-cash.png"
+                                        src="<?php echo SITE_URL; ?>/assets/images/jazzcash-logo.png"
                                         style="width: 230px;border-radius: 10px;"
                                     />
                                 </div>
@@ -198,16 +198,16 @@ $apiVersion = $jazzcash->getApiVersion();
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span>Shipping:</span>
-                        <span><?php echo CURRENCY . ' 200'; ?></span>
+                        <span><?php echo CURRENCY . ' 0'; ?></span>
                     </div>
                     <div class="d-flex justify-content-between mb-2">
-                        <span>Tax (5%):</span>
-                        <span><?php echo CURRENCY . ' ' . number_format($subtotal * 0.05); ?></span>
+                        <span>Tax:</span>
+                        <span><?php echo CURRENCY . ' ' . number_format($subtotal * 0.00); ?></span>
                     </div>
                     <hr>
                     <div class="d-flex justify-content-between">
                         <strong>Total:</strong>
-                        <strong><?php echo CURRENCY . ' ' . number_format($subtotal + 200 + ($subtotal * 0.05)); ?></strong>
+                        <strong><?php echo CURRENCY . ' ' . number_format($subtotal + 0 + ($subtotal * 0.00)); ?></strong>
                     </div>
                 </div>
             </div>

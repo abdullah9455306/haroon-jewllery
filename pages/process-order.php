@@ -105,8 +105,8 @@ try {
     foreach ($cartItems as $item) {
         $subtotal += $item['price'] * $item['quantity'];
     }
-    $shipping = 200;
-    $tax = $subtotal * 0.05;
+    $shipping = 0;
+    $tax = $subtotal * 0.00;
     $total = $subtotal + $shipping + $tax;
 
     // Validate form data
