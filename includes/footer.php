@@ -21,6 +21,7 @@
                     <li class="mb-2"><a href="<?php echo SITE_URL; ?>/about-us">About Us</a></li>
                     <li class="mb-2"><a href="<?php echo SITE_URL; ?>/contact">Contact</a></li>
                     <li class="mb-2"><a href="<?php echo SITE_URL; ?>/privacy-policy">Privacy Policy</a></li>
+                    <li class="mb-2"><a href="<?php echo SITE_URL; ?>/refund-policy">Refund Policy</a></li>
                 </ul>
             </div>
 

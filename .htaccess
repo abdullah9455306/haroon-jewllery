@@ -19,6 +19,7 @@ RewriteRule ^category/([a-zA-Z0-9\-_+%&'()]+)/?$ pages/products.php?category=$1 
 RewriteRule ^about-us?$ pages/about.php [L]
 RewriteRule ^contact?$ pages/contact.php [L]
 RewriteRule ^privacy-policy?$ pages/privacy.php [L]
+RewriteRule ^refund-policy?$ pages/refund-policy.php [L]
 RewriteRule ^register?$ pages/register.php [L]
 RewriteRule ^login?$ pages/login.php [L]
 RewriteRule ^logout?$ pages/logout.php [L]
@@ -36,10 +37,6 @@ RewriteRule ^cart?$ pages/cart.php [L]
 RewriteRule ^checkout?$ pages/checkout.php [L]
 RewriteRule ^process-order?$ pages/process-order.php [L]
 RewriteRule ^checkout/retry_order/([a-zA-Z0-9\-_+%&'()]+)/?$ pages/order-failed.php?id=$1 [L]
-
-
-
-
 
 # User pages
 RewriteRule ^my-account/?$ pages/user_dashboard.php [L]
