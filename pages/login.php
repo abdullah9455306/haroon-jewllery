@@ -269,7 +269,7 @@ require_once '../includes/header.php';
                 </div>
 
                 <!-- Benefit 2 -->
-                <div class="d-flex mb-4">
+                <!--<div class="d-flex mb-4">
                     <div class="flex-shrink-0">
                         <i class="fas fa-heart fa-2x text-gold"></i>
                     </div>
@@ -277,7 +277,7 @@ require_once '../includes/header.php';
                         <h6>Wishlist</h6>
                         <p class="text-muted small mb-0">Save your favorite jewelry pieces</p>
                     </div>
-                </div>
+                </div>-->
 
                 <!-- Benefit 3 -->
                 <div class="d-flex mb-4">
@@ -324,7 +324,7 @@ require_once '../includes/header.php';
                         </div>
                         <div class="col-4 mb-3">
                             <div class="trust-stat">
-                                <div class="h5 text-gold mb-1">35+</div>
+                                <div class="h5 text-gold mb-1">10+</div>
                                 <small class="text-muted">Years Experience</small>
                             </div>
                         </div>

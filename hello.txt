@@ -1,0 +1,24 @@
+WWWAcct 12.6.0 (c) 2025 cPanel, L.L.C....
+
++===================================+
+| New Account Info                  |
++===================================+
+| Domain: haroonjewellery.com
+| Ip: 67.222.25.121 (n)
+| HasCgi: y
+| UserName: haroonjewelleryu
+| PassWord: Ix{]HODi]xW6f2D(
+| CpanelMod: jupiter
+| HomeRoot: /home
+| Quota: 48.83 GB
+| NameServer1: ns66.ebiz2do.com
+| NameServer2: ns67.ebiz2do.com
+| NameServer3:
+| NameServer4:
+| Contact Email:
+| Package: 5GB
+| Feature List: default
+| Account Enhancements: None
+| Language: en
++===================================+
+...Done

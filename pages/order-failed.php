@@ -27,7 +27,7 @@ $db = new Database();
 $conn = $db->getConnection();
 
 // Fetch order details
-$orderQuery = "SELECT o.*, jt.pp_ResponseMessage, jt.pp_ResponseCode, jt.pp_TxnRefNo
+$orderQuery = "SELECT o.*, jt.pp_ResponseMessage, jt.pp_ResponseCode, jt.pp_TxnRefNo, jt.pp_MobileNumber
                FROM orders o
                LEFT JOIN jazzcash_transactions jt ON o.id = jt.order_id
                WHERE o.id = ? AND o.user_id = ?";
@@ -97,7 +97,7 @@ $failureReason = $failureReasons[$errorCode] ?? $failureReasons['999'];
             </div>
 
             <!-- Solution Card -->
-            <div class="card shadow-sm border-warning mb-4">
+            <!--<div class="card shadow-sm border-warning mb-4">
                 <div class="card-header bg-warning text-dark">
                     <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Suggested Solution</h5>
                 </div>
@@ -113,7 +113,7 @@ $failureReason = $failureReasons[$errorCode] ?? $failureReasons['999'];
                         <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Try again after a few minutes</li>
                     </ul>
                 </div>
-            </div>
+            </div>-->
 
             <!-- Order Information -->
             <div class="card shadow-sm mb-4">
@@ -129,7 +129,7 @@ $failureReason = $failureReasons[$errorCode] ?? $failureReasons['999'];
                         </div>
                         <div class="col-md-6">
                             <p class="mb-1"><strong>Payment Method:</strong> JazzCash Mobile</p>
-                            <p class="mb-1"><strong>Mobile Number:</strong> <?php echo htmlspecialchars($order['jazzcash_mobile_number'] ?? 'N/A'); ?></p>
+                            <p class="mb-1"><strong>Mobile Number:</strong> <?php echo htmlspecialchars($order['pp_MobileNumber'] ?? 'N/A'); ?></p>
                             <p class="mb-0"><strong>Status:</strong> <span class="badge bg-danger">Payment Failed</span></p>
                         </div>
                     </div>
@@ -143,15 +143,7 @@ $failureReason = $failureReasons[$errorCode] ?? $failureReasons['999'];
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="d-grid">
-                                <a href="<?php echo SITE_URL; ?>/checkout/retry_order/<?php echo $order_id; ?>" class="btn btn-gold btn-lg">
-                                    <i class="fas fa-credit-card me-2"></i>Retry Payment
-                                </a>
-                                <small class="text-muted text-center mt-2 d-block">Try paying again with the same order</small>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <div class="d-grid">
                                 <a href="<?php echo SITE_URL; ?>/cart" class="btn btn-outline-dark btn-lg">
                                     <i class="fas fa-shopping-cart me-2"></i>Back to Cart
@@ -159,10 +151,8 @@ $failureReason = $failureReasons[$errorCode] ?? $failureReasons['999'];
                                 <small class="text-muted text-center mt-2 d-block">Review your cart items</small>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="row mt-3">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <div class="d-grid">
                                 <a href="<?php echo SITE_URL; ?>/products" class="btn btn-outline-primary btn-lg">
                                     <i class="fas fa-shopping-bag me-2"></i>Continue Shopping
@@ -170,7 +160,8 @@ $failureReason = $failureReasons[$errorCode] ?? $failureReasons['999'];
                                 <small class="text-muted text-center mt-2 d-block">Browse more products</small>
                             </div>
                         </div>
-                        <div class="col-md-6 mb-3">
+
+                        <div class="col-md-4 mb-3">
                             <div class="d-grid">
                                 <a href="<?php echo SITE_URL; ?>/orders" class="btn btn-outline-secondary btn-lg">
                                     <i class="fas fa-list me-2"></i>View Orders
@@ -183,7 +174,7 @@ $failureReason = $failureReasons[$errorCode] ?? $failureReasons['999'];
             </div>
 
             <!-- Support Information -->
-            <div class="alert alert-warning mt-4">
+            <!--<div class="alert alert-warning mt-4">
                 <div class="d-flex align-items-center">
                     <i class="fas fa-headset me-3 fs-4"></i>
                     <div>
@@ -200,10 +191,10 @@ $failureReason = $failureReasons[$errorCode] ?? $failureReasons['999'];
                         <p class="mb-0 mt-2"><small>Please mention your order number: <strong><?php echo htmlspecialchars($order['order_number']); ?></strong></small></p>
                     </div>
                 </div>
-            </div>
+            </div>-->
 
             <!-- JazzCash Support -->
-            <div class="alert alert-info">
+            <!--<div class="alert alert-info">
                 <div class="d-flex align-items-center">
                     <i class="fas fa-mobile-alt me-3 fs-4"></i>
                     <div>
@@ -212,7 +203,7 @@ $failureReason = $failureReasons[$errorCode] ?? $failureReasons['999'];
                         <p class="mb-0"><strong>Helpline:</strong> 4444 (from your Jazz number) or <strong>021-111-124-367</strong></p>
                     </div>
                 </div>
-            </div>
+            </div>-->
         </div>
     </div>
 </div>

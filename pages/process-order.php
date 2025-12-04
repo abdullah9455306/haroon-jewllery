@@ -33,10 +33,8 @@ function processPaymentResponse($postData, $orderId, $conn) {
             throw new Exception('Invalid payment response: ' . $response['error']);
         }
 
-        // Update transaction status
+        // Update transaction status ONLY (response data already updated)
         $updateTransactionQuery = "UPDATE jazzcash_transactions SET
-            pp_ResponseCode = ?,
-            pp_ResponseMessage = ?,
             status = ?,
             updated_at = NOW()
             WHERE pp_TxnRefNo = ?";
@@ -44,13 +42,11 @@ function processPaymentResponse($postData, $orderId, $conn) {
         $transactionStatus = $jazzcash->isSuccessResponse($response['response_code']) ? 'completed' : 'failed';
         $updateTransactionStmt = $conn->prepare($updateTransactionQuery);
         $updateTransactionStmt->execute([
-            $response['response_code'],
-            $response['response_message'],
             $transactionStatus,
             $response['txn_ref_no']
         ]);
 
-        // Update order status - REMOVED jazzcash_transaction_ref column
+        // Update order status
         $orderStatus = $jazzcash->isSuccessResponse($response['response_code']) ? 'processing' : 'pending';
         $paymentStatus = $jazzcash->isSuccessResponse($response['response_code']) ? 'paid' : 'failed';
 
@@ -229,6 +225,23 @@ try {
     $make_call = json_decode($make_call, true);
     // Process the payment response
     if (isset($make_call['pp_ResponseCode'])) {
+    // Update transaction with response data
+        $updateResponseQuery = "UPDATE jazzcash_transactions SET
+            pp_ResponseCode = ?,
+            pp_ResponseMessage = ?,
+            pp_BankID = ?,
+            pp_SecureHash = ?,
+            updated_at = NOW()
+            WHERE pp_TxnRefNo = ?";
+
+        $updateResponseStmt = $conn->prepare($updateResponseQuery);
+        $updateResponseStmt->execute([
+            $make_call['pp_ResponseCode'] ?? null,
+            $make_call['pp_ResponseMessage'] ?? null,
+            $make_call['pp_BankID'] ?? null,
+            $make_call['pp_SecureHash'] ?? null,
+            $paymentInit['txn_ref_no']
+        ]);
         $paymentResult = processPaymentResponse($make_call, $orderId, $conn);
 
         if ($paymentResult['success']) {

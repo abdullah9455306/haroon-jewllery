@@ -1,16 +1,16 @@
 <!-- Footer -->
 <footer class="footer bg-dark" style="bottom: -38px;width: 100%;position: relative;">
-    <div class="container">
+    <div class="container-fluid">
         <div class="row">
             <div class="col-lg-4 col-md-6 mb-4">
                 <h5 class="brand-font mb-4"><img src="<?php echo SITE_URL; ?>/assets/images/logo.webp" style="width: 130px;"/></h5>
                 <p class="text-light">Crafting exquisite jewelry pieces. We bring you the finest quality gold, diamonds, and precious stones with timeless designs.</p>
-                <div class="social-icons mt-4">
+                <!--<div class="social-icons mt-4">
                     <a href="#"><i class="fab fa-facebook-f"></i></a>
                     <a href="#"><i class="fab fa-instagram"></i></a>
                     <a href="#"><i class="fab fa-twitter"></i></a>
                     <a href="#"><i class="fab fa-whatsapp"></i></a>
-                </div>
+                </div>-->
             </div>
 
             <div class="col-lg-2 col-md-6 mb-4">
@@ -79,8 +79,12 @@
         <hr class="my-4 bg-light">
 
         <div class="row align-items-center">
-            <div class="col-md-12 text-center">
+            <div class="col-md-6 pb-4">
                 <p class="mb-0">&copy; <?php echo date('Y'); ?> Haroon Jewellery. All rights reserved.</p>
+            </div>
+
+            <div class="col-md-6 pb-4" style="text-align:right">
+                <p class="mb-0">v1.0.0</p>
             </div>
         </div>
     </div>

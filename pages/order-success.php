@@ -146,7 +146,7 @@ require_once '../includes/header.php';
                                     <td><strong><?php echo CURRENCY . ' ' . number_format($order['shipping'], 2); ?></strong></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="3" class="text-end"><strong>Tax (5%):</strong></td>
+                                    <td colspan="3" class="text-end"><strong>Tax:</strong></td>
                                     <td><strong><?php echo CURRENCY . ' ' . number_format($order['tax'], 2); ?></strong></td>
                                 </tr>
                                 <tr>
@@ -166,21 +166,21 @@ require_once '../includes/header.php';
                 </div>
                 <div class="card-body">
                     <div class="row text-center">
-                        <div class="col-md-4 mb-3">
+                        <!--<div class="col-md-4 mb-3">
                             <div class="p-3">
                                 <i class="fas fa-envelope text-primary mb-3" style="font-size: 2rem;"></i>
                                 <h6>Order Confirmation</h6>
                                 <p class="small text-muted">You will receive an email confirmation shortly with your order details.</p>
                             </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
+                        </div>-->
+                        <div class="col-md-6 mb-3">
                             <div class="p-3">
                                 <i class="fas fa-truck text-warning mb-3" style="font-size: 2rem;"></i>
                                 <h6>Order Processing</h6>
                                 <p class="small text-muted">We'll start processing your order and update you on the shipping status.</p>
                             </div>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-6 mb-3">
                             <div class="p-3">
                                 <i class="fas fa-home text-success mb-3" style="font-size: 2rem;"></i>
                                 <h6>Delivery</h6>
@@ -205,7 +205,7 @@ require_once '../includes/header.php';
             </div>
 
             <!-- Support Information -->
-            <div class="alert alert-info mt-4">
+            <!--<div class="alert alert-info mt-4">
                 <div class="d-flex align-items-center">
                     <i class="fas fa-question-circle me-3 fs-4"></i>
                     <div>
@@ -213,7 +213,7 @@ require_once '../includes/header.php';
                         <p class="mb-0">If you have any questions about your order, please contact our customer support at <strong>info@haroonjewellery.com</strong> or call us at <strong>0306-0000905, 0323-1441230</strong>.</p>
                     </div>
                 </div>
-            </div>
+            </div>-->
         </div>
     </div>
 </div>

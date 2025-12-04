@@ -108,14 +108,14 @@ $apiVersion = $jazzcash->getApiVersion();
                             <h6 class="mb-3">JazzCash Payment Details</h6>
 
                             <div class="row">
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
                                     <img
                                         src="<?php echo SITE_URL; ?>/assets/images/jazzcash-logo.png"
-                                        style="width: 230px;border-radius: 10px;"
+                                        style="width: 100px;border-radius: 10px;"
                                     />
                                 </div>
 
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-8 mb-3">
                                   <?php if ($apiVersion === '2.0'): ?>
                                     <div class="form-group mb-3">
                                          <label for="jazzcash_mobile_number" class="form-label">JazzCash Mobile Number *</label>
@@ -144,13 +144,6 @@ $apiVersion = $jazzcash->getApiVersion();
                                         </div>
                                      <?php endif; ?>
                                     </div>
-                            </div>
-
-                            <div class="alert alert-info">
-                                <small>
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    You will be redirected to JazzCash secure payment page to complete your transaction.
-                                </small>
                             </div>
                         </div>
                     </div>

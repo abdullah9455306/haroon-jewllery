@@ -230,7 +230,7 @@ if (empty($sliders)) {
                                         <a href="<?php echo SITE_URL; ?>/product-<?php echo $product['id']; ?>" class="btn btn-gold btn-sm w-75 mb-2">
                                             Quick View
                                         </a>
-                                        <?php if($product['stock_quantity'] > 0): ?>
+                                        <!--<?php if($product['stock_quantity'] > 0): ?>
                                             <button class="btn btn-dark btn-sm w-75 add-to-cart"
                                                     data-product-id="<?php echo $product['id']; ?>">
                                                 Add to Cart
@@ -239,7 +239,7 @@ if (empty($sliders)) {
                                             <button class="btn btn-outline-secondary btn-sm w-75" disabled>
                                                 Out of Stock
                                             </button>
-                                        <?php endif; ?>
+                                        <?php endif; ?>-->
                                     </div>
                                 </div>
                             </div>

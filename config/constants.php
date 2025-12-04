@@ -6,7 +6,7 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 
 // JazzCash Configuration
-define('JAZZCASH_API_VERSION', '2.0'); // Set to '1.1' or '2.0'
+define('JAZZCASH_API_VERSION', '1.1'); // Set to '1.1' or '2.0'
 define('JAZZCASH_ENVIRONMENT', 'production'); // 'sandbox' or 'production'
 
 // JazzCash Mobile Configuration v1.1
