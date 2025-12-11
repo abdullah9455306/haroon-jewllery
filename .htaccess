@@ -8,6 +8,14 @@ RewriteRule ^(.*)$ $1.php [L]
 # Home Page
 RewriteRule ^/?$ index.php [L]
 
+# API Routes
+RewriteRule ^api/v1/request-payment/?$ api/v1/third-party/request-payment.php [L]
+RewriteRule ^api/v1/status-query/?$ api/v1/third-party/status-query.php [L]
+RewriteRule ^api/v1/callback-respond/?$ api/v1/third-party/callback-respond.php [L]
+
+# Client-specific callback route (as you requested)
+RewriteRule ^v1/payment/client=([a-zA-Z0-9]+)/?$ api/v1/third-party/callback-respond.php?client=$1 [L,QSA]
+
 # Product pages
 RewriteRule ^product-([0-9]+)/?$ pages/product-detail.php?id=$1 [L]
 RewriteRule ^products/?$ pages/products.php [L]
@@ -16,37 +24,43 @@ RewriteRule ^products/?$ pages/products.php [L]
 RewriteRule ^category/([a-zA-Z0-9\-_+%&'()]+)/?$ pages/products.php?category=$1 [L,QSA,B]
 
 # Static pages
-RewriteRule ^about-us?$ pages/about.php [L]
-RewriteRule ^contact?$ pages/contact.php [L]
-RewriteRule ^privacy-policy?$ pages/privacy.php [L]
-RewriteRule ^refund-policy?$ pages/refund-policy.php [L]
-RewriteRule ^register?$ pages/register.php [L]
-RewriteRule ^login?$ pages/login.php [L]
-RewriteRule ^logout?$ pages/logout.php [L]
-RewriteRule ^profile?$ pages/profile.php [L]
+RewriteRule ^about-us/?$ pages/about.php [L]
+RewriteRule ^contact/?$ pages/contact.php [L]
+RewriteRule ^privacy-policy/?$ pages/privacy.php [L]
+RewriteRule ^refund-policy/?$ pages/refund-policy.php [L]
+RewriteRule ^register/?$ pages/register.php [L]
+RewriteRule ^login/?$ pages/login.php [L]
+RewriteRule ^logout/?$ pages/logout.php [L]
+RewriteRule ^profile/?$ pages/profile.php [L]
 
 # Order pages
-RewriteRule ^orders?$ pages/orders.php [L]
+RewriteRule ^orders/?$ pages/orders.php [L]
 RewriteRule ^order-details/([a-zA-Z0-9\-_+%&'()]+)/?$ pages/order-details.php?id=$1 [L]
-
 RewriteRule ^order-success/([a-zA-Z0-9\-_+%&'()]+)/?$ pages/order-success.php?id=$1 [L]
 RewriteRule ^order-failed/([a-zA-Z0-9\-_+%&'()]+)/?$ pages/order-failed.php?id=$1 [L,QSA]
 
 # Cart and Checkout pages
-RewriteRule ^cart?$ pages/cart.php [L]
-RewriteRule ^checkout?$ pages/checkout.php [L]
-RewriteRule ^process-order?$ pages/process-order.php [L]
+RewriteRule ^cart/?$ pages/cart.php [L]
+RewriteRule ^checkout/?$ pages/checkout.php [L]
+RewriteRule ^process-order/?$ pages/process-order.php [L]
 RewriteRule ^checkout/retry_order/([a-zA-Z0-9\-_+%&'()]+)/?$ pages/order-failed.php?id=$1 [L]
+
+# Test Apis
+RewriteRule ^developer/test-apis/?$ test-apis.html [L]
 
 # User pages
 RewriteRule ^my-account/?$ pages/user_dashboard.php [L]
 RewriteRule ^my-orders/?$ pages/orders.php [L]
 RewriteRule ^wishlist/?$ pages/wishlist.php [L]
-
-
 RewriteRule ^order-confirmation/?$ pages/order_success.php [L]
 
-# Admin pages (make them less obvious)
+# Admin pages
 RewriteRule ^admin-dashboard/?$ admin/index.php [L]
 RewriteRule ^manage-products/?$ admin/products.php [L]
 RewriteRule ^manage-orders/?$ admin/orders.php [L]
+
+# Payment callback (existing)
+RewriteRule ^payment-callback/?$ api/payment-callback.php [L]
+
+# Handle 404 errors
+ErrorDocument 404 /pages/404.php

@@ -1,5 +1,5 @@
 <?php
-require_once '../config/constants.php';
+require_once dirname(__DIR__) . '/config/constants.php';
 
 class JazzCashPayment {
     public $merchantId;
@@ -253,7 +253,7 @@ class JazzCashPayment {
                     'success' => false,
                     'error' => 'Response integrity check failed',
                     'response_code' => 'HASH_MISMATCH',
-                    'response_message' => 'Secure hash verification failed for status inquiry'
+                    'response_message' => 'Secure hash verification failed'
                 ];
       }
 
@@ -466,4 +466,42 @@ private function parseStatusInquiryResponse($responseData) {
         'raw_response' => $responseData
     ];
 }
+
+  /**
+     * Enhanced verifyResponse method with third-party callback
+     */
+    public function verifyResponseWithCallback($postData, $clientCode = null) {
+        // Original verification
+        $verificationResult = $this->verifyResponse($postData);
+
+        // Add hash verification
+        $verificationResult['hash_verified'] = $this->verifyResponseHash($postData);
+
+        // If client code is provided, trigger callback
+        if ($clientCode) {
+            $callbackHandler = new ThirdPartyCallbackHandler();
+            $callbackResult = $callbackHandler->sendCallback($clientCode, $verificationResult);
+
+            $verificationResult['callback_result'] = $callbackResult;
+        }
+
+        return $verificationResult;
+    }
+
+    /**
+     * Enhanced status inquiry with callback
+     */
+    public function performStatusInquiryWithCallback($transactionRefNo, $clientCode = null) {
+        $statusResult = $this->performStatusInquiry($transactionRefNo);
+
+        // If client code is provided, trigger callback
+        if ($clientCode && isset($statusResult['success'])) {
+            $callbackHandler = new ThirdPartyCallbackHandler();
+            $callbackResult = $callbackHandler->sendCallback($clientCode, $statusResult);
+
+            $statusResult['callback_result'] = $callbackResult;
+        }
+
+        return $statusResult;
+    }
 }

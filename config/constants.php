@@ -25,9 +25,9 @@ define('JAZZCASH_SALT', '497w0t96wd');
 // define('JAZZCASH_V2_PASSWORD', 't15va48u3u');
 
 // JazzCash Live Configuration v2.0
-define('JAZZCASH_V2_MERCHANT_ID', '965909');
-define('JAZZCASH_V2_INTEGRITY_SALT', '497w0t96wd');
-define('JAZZCASH_V2_PASSWORD', 'tf2az92wvu');
+// define('JAZZCASH_V2_MERCHANT_ID', '965909');
+// define('JAZZCASH_V2_INTEGRITY_SALT', '497w0t96wd');
+// define('JAZZCASH_V2_PASSWORD', 'tf2az92wvu');
 
 define('JAZZCASH_RETURN_URL', 'https://haroonjewellery.com/api/payment-callback.php');
 define('JAZZCASH_CALLBACK_URL', 'https://haroonjewellery.com/api/payment-callback.php');

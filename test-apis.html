@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Haroon Jewellery API Tester</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      color: white;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+    }
+
+    .tester-container {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .endpoint-selector {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .endpoint-selector h2 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    }
+
+    .api-button {
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      border: none;
+      background: #4CAF50;
+      color: white;
+      font-size: 1.1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    .api-button:hover {
+      background: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .api-button.active {
+      background: #2196F3;
+    }
+
+    .request-tester {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .endpoint-info {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #2196F3;
+    }
+
+    .endpoint-info h3 {
+      color: #2196F3;
+      margin-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus, .form-group textarea:focus {
+      border-color: #2196F3;
+      outline: none;
+    }
+
+    .form-group textarea {
+      min-height: 150px;
+      font-family: monospace;
+      resize: vertical;
+    }
+
+    .submit-btn {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 1.1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    .submit-btn:hover {
+      background: #1976D2;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+    }
+
+    .response-container {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .response-container h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .response-box {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      min-height: 200px;
+      border: 1px solid #ddd;
+      overflow-x: auto;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+
+    .response-box.success {
+      border-left: 4px solid #4CAF50;
+    }
+
+    .response-box.error {
+      border-left: 4px solid #f44336;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+
+    .status-indicator.success {
+      background: #4CAF50;
+    }
+
+    .status-indicator.error {
+      background: #f44336;
+    }
+
+    @media (max-width: 768px) {
+      .tester-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Haroon Jewellery API Tester</h1>
+    <p>Test JazzCash Payment Gateway APIs</p>
+  </header>
+
+  <div class="tester-container">
+    <div class="endpoint-selector">
+      <h2>API Endpoints</h2>
+      <button class="api-button active" onclick="selectEndpoint('request-payment')">
+        1. Request Payment
+      </button>
+      <button class="api-button" onclick="selectEndpoint('status-query')">
+        2. Status Query
+      </button>
+<!--      <button class="api-button" onclick="selectEndpoint('callback-respond')">-->
+<!--        3. Callback Respond-->
+<!--      </button>-->
+<!--      <button class="api-button" onclick="selectEndpoint('client-callback')">-->
+<!--        4. Client Callback-->
+<!--      </button>-->
+
+<!--      <div style="margin-top: 30px; padding: 15px; background: #f0f7ff; border-radius: 8px;">-->
+<!--        <h3>Test Data</h3>-->
+<!--        <p><strong>Base URL:</strong> https://haroonjewellery.com</p>-->
+<!--        <p><strong>Client Code:</strong> REDPAY</p>-->
+<!--        <button onclick="loadTestData()" style="margin-top: 10px; padding: 8px 15px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer;">-->
+<!--          Load Test Data-->
+<!--        </button>-->
+<!--      </div>-->
+    </div>
+
+    <div class="request-tester">
+      <!-- Request Payment Form -->
+      <div id="request-payment-form" class="endpoint-form">
+        <div class="endpoint-info">
+          <h3>POST /api/v1/request-payment</h3>
+          <p>Initiate a new payment request through JazzCash</p>
+        </div>
+
+        <div class="form-group">
+          <label for="rp-amount">Amount (PKR)</label>
+          <input type="number" id="rp-amount" placeholder="1000" step="0.01">
+        </div>
+
+        <div class="form-group">
+          <label for="rp-mobile">Mobile Number</label>
+          <input type="text" id="rp-mobile" placeholder="03001234567">
+        </div>
+
+        <div class="form-group">
+          <label for="rp-description">Description</label>
+          <input type="text" id="rp-description" placeholder="Payment for Order #12345">
+        </div>
+
+        <div class="form-group">
+          <label for="rp-client-code">Client Code</label>
+          <input type="text" id="rp-client-code" placeholder="REDPAY">
+        </div>
+
+        <div class="form-group">
+          <label for="rp-cnic">CNIC Number (Optional)</label>
+          <input type="text" id="rp-cnic" placeholder="1234567890123">
+        </div>
+
+        <div class="form-group">
+          <label for="rp-api-version">API Version</label>
+           <input type="text" id="rp-api-version" value="1.1" disabled>
+        </div>
+
+        <button class="submit-btn" onclick="testRequestPayment()">Test Request Payment</button>
+      </div>
+
+      <!-- Status Query Form -->
+      <div id="status-query-form" class="endpoint-form hidden">
+        <div class="endpoint-info">
+          <h3>POST /api/v1/status-query</h3>
+          <p>Check the status of a transaction</p>
+        </div>
+
+        <div class="form-group">
+          <label for="sq-transaction-ref">Transaction Reference</label>
+          <input type="text" id="sq-transaction-ref" placeholder="T20231201123045">
+        </div>
+
+        <div class="form-group">
+          <label for="sq-client-code">Client Code</label>
+          <input type="text" id="sq-client-code" placeholder="REDPAY">
+        </div>
+
+        <div class="form-group">
+          <label for="sq-api-version">API Version</label>
+          <input type="text" id="sq-api-version" value="1.1" disabled>
+        </div>
+
+        <button class="submit-btn" onclick="testStatusQuery()">Test Status Query</button>
+      </div>
+
+      <!-- Callback Respond Form -->
+      <div id="callback-respond-form" class="endpoint-form hidden">
+        <div class="endpoint-info">
+          <h3>POST /api/v1/callback-respond</h3>
+          <p>Simulate JazzCash callback response</p>
+        </div>
+
+        <div class="form-group">
+          <label for="cr-response-data">JazzCash Response Data (JSON)</label>
+          <textarea id="cr-response-data">{
+    "pp_ResponseCode": "000",
+    "pp_ResponseMessage": "Transaction Successful",
+    "pp_TxnRefNo": "T20251211081729",
+    "pp_Amount": "10",
+    "pp_MerchantID": "965909",
+    "pp_Version": "1.1",
+    "pp_Language": "EN",
+    "ppmpf_1": "03249455306"
+}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="cr-client-code">Client Code (or leave empty for all)</label>
+          <input type="text" id="cr-client-code" placeholder="REDPAY">
+        </div>
+
+        <button class="submit-btn" onclick="testCallbackRespond()">Test Callback Respond</button>
+      </div>
+
+      <!-- Client Callback Form -->
+      <div id="client-callback-form" class="endpoint-form hidden">
+        <div class="endpoint-info">
+          <h3>GET/POST /v1/payment/client={CLIENT_CODE}</h3>
+          <p>Client-specific callback endpoint</p>
+        </div>
+
+        <div class="form-group">
+          <label for="cc-client-code">Client Code (in URL)</label>
+          <input type="text" id="cc-client-code" placeholder="REDPAY">
+        </div>
+
+        <div class="form-group">
+          <label for="cc-response-data">JazzCash Response Data (JSON)</label>
+          <textarea id="cc-response-data">{
+    "pp_ResponseCode": "000",
+    "pp_ResponseMessage": "Transaction Successful",
+    "pp_TxnRefNo": "T20231201123045",
+    "pp_Amount": "100000",
+    "pp_MerchantID": "MC408931",
+    "pp_Version": "1.1",
+    "ppmpf_1": "03001234567"
+}</textarea>
+        </div>
+
+        <button class="submit-btn" onclick="testClientCallback()">Test Client Callback</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="response-container">
+    <h2>API Response</h2>
+    <div id="response-box" class="response-box">
+      Response will appear here...
+    </div>
+  </div>
+</div>
+
+<script>
+  // const BASE_URL = 'https://haroonjewellery.com';
+  const BASE_URL = 'http://localhost:8080/haroon-jewellery';
+  let currentEndpoint = 'request-payment';
+
+  // Select endpoint
+  function selectEndpoint(endpoint) {
+    // Hide all forms
+    document.querySelectorAll('.endpoint-form').forEach(form => {
+      form.classList.add('hidden');
+    });
+
+    // Remove active class from all buttons
+    document.querySelectorAll('.api-button').forEach(button => {
+      button.classList.remove('active');
+    });
+
+    // Show selected form
+    document.getElementById(`${endpoint}-form`).classList.remove('hidden');
+
+    // Add active class to clicked button
+    event.target.classList.add('active');
+
+    currentEndpoint = endpoint;
+  }
+
+  // Load test data
+  function loadTestData() {
+    const testData = {
+      'rp-amount': '10',
+      'rp-mobile': '03249455306',
+      'rp-description': 'Payment for REDPAY',
+      'rp-client-code': 'REDPAY',
+      'rp-cnic': '',
+      'rp-api-version': '1.1',
+      'sq-transaction-ref': 'T20231201123045',
+      'sq-client-code': 'REDPAY',
+      'sq-api-version': '1.1',
+      'cr-client-code': 'REDPAY',
+      'cc-client-code': 'REDPAY'
+    };
+
+    for (const [id, value] of Object.entries(testData)) {
+      const element = document.getElementById(id);
+      if (element) element.value = value;
+    }
+
+    showResponse('Test data loaded successfully!', 'success');
+  }
+
+  // Show response in box
+  function showResponse(data, type = 'info') {
+    const responseBox = document.getElementById('response-box');
+    responseBox.className = 'response-box';
+    responseBox.classList.add(type);
+
+    if (typeof data === 'object') {
+      responseBox.textContent = JSON.stringify(data, null, 2);
+    } else {
+      responseBox.textContent = data;
+    }
+  }
+
+  // Test Request Payment
+  async function testRequestPayment() {
+    try {
+      showResponse('Sending request...', 'info');
+
+      const payload = {
+        amount: parseFloat(document.getElementById('rp-amount').value),
+        mobile_number: document.getElementById('rp-mobile').value,
+        description: document.getElementById('rp-description').value,
+        client_code: document.getElementById('rp-client-code').value,
+        cnic_number: document.getElementById('rp-cnic').value || null,
+        api_version: document.getElementById('rp-api-version').value
+      };
+
+      const response = await fetch(`${BASE_URL}/api/v1/request-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showResponse({
+          status: 'success',
+          statusCode: response.status,
+          timestamp: new Date().toISOString(),
+          data: data,
+          requestPayload: payload
+        }, 'success');
+      } else {
+        showResponse({
+          status: 'error',
+          statusCode: response.status,
+          error: data.error || 'Request failed',
+          data: data
+        }, 'error');
+      }
+
+    } catch (error) {
+      showResponse({
+        status: 'error',
+        message: 'Network error',
+        error: error.message
+      }, 'error');
+    }
+  }
+
+  // Test Status Query
+  async function testStatusQuery() {
+    try {
+      showResponse('Checking status...', 'info');
+
+      const payload = {
+        transaction_ref: document.getElementById('sq-transaction-ref').value,
+        client_code: document.getElementById('sq-client-code').value,
+        api_version: document.getElementById('sq-api-version').value
+      };
+
+      const response = await fetch(`${BASE_URL}/api/v1/status-query`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showResponse({
+          status: 'success',
+          statusCode: response.status,
+          timestamp: new Date().toISOString(),
+          data: data,
+          requestPayload: payload
+        }, 'success');
+      } else {
+        showResponse({
+          status: 'error',
+          statusCode: response.status,
+          error: data.error || 'Request failed',
+          data: data
+        }, 'error');
+      }
+
+    } catch (error) {
+      showResponse({
+        status: 'error',
+        message: 'Network error',
+        error: error.message
+      }, 'error');
+    }
+  }
+
+  // Test Callback Respond
+  async function testCallbackRespond() {
+    try {
+      showResponse('Sending callback...', 'info');
+
+      const responseData = JSON.parse(document.getElementById('cr-response-data').value);
+      const clientCode = document.getElementById('cr-client-code').value;
+
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+
+      if (clientCode) {
+        headers['X-Client-Code'] = clientCode;
+      }
+
+      const response = await fetch(`${BASE_URL}/api/v1/callback-respond`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(responseData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showResponse({
+          status: 'success',
+          statusCode: response.status,
+          timestamp: new Date().toISOString(),
+          data: data,
+          requestPayload: responseData
+        }, 'success');
+      } else {
+        showResponse({
+          status: 'error',
+          statusCode: response.status,
+          error: data.error || 'Request failed',
+          data: data
+        }, 'error');
+      }
+
+    } catch (error) {
+      showResponse({
+        status: 'error',
+        message: 'Network error or invalid JSON',
+        error: error.message
+      }, 'error');
+    }
+  }
+
+  // Test Client Callback
+  async function testClientCallback() {
+    try {
+      showResponse('Sending client callback...', 'info');
+
+      const clientCode = document.getElementById('cc-client-code').value;
+      const responseData = JSON.parse(document.getElementById('cc-response-data').value);
+
+      // First try POST
+      const response = await fetch(`${BASE_URL}/v1/payment/client=${clientCode}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(responseData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showResponse({
+          status: 'success',
+          statusCode: response.status,
+          method: 'POST',
+          timestamp: new Date().toISOString(),
+          data: data,
+          requestPayload: responseData
+        }, 'success');
+      } else {
+        // If POST fails, try GET with query parameters
+        showResponse('POST failed, trying GET...', 'info');
+
+        const params = new URLSearchParams();
+        for (const [key, value] of Object.entries(responseData)) {
+          params.append(key, value);
+        }
+
+        const getResponse = await fetch(`${BASE_URL}/v1/payment/client=${clientCode}?${params.toString()}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        const getData = await getResponse.json();
+
+        showResponse({
+          status: getResponse.ok ? 'success' : 'error',
+          statusCode: getResponse.status,
+          method: 'GET',
+          timestamp: new Date().toISOString(),
+          data: getData,
+          requestPayload: responseData
+        }, getResponse.ok ? 'success' : 'error');
+      }
+
+    } catch (error) {
+      showResponse({
+        status: 'error',
+        message: 'Network error or invalid JSON',
+        error: error.message
+      }, 'error');
+    }
+  }
+
+  // Initialize with test data
+  window.onload = loadTestData;
+</script>
+</body>
+</html>

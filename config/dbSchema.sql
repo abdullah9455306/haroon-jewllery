@@ -219,6 +219,35 @@ CREATE TABLE settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+CREATE TABLE third_party_callbacks (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    client_name VARCHAR(100) NOT NULL,
+    client_code VARCHAR(50) UNIQUE NOT NULL,
+    callback_url VARCHAR(500) NOT NULL,
+    secret_key VARCHAR(255) DEFAULT NULL,
+    auth_token VARCHAR(255) DEFAULT NULL,
+    http_method ENUM('POST', 'GET', 'PUT') DEFAULT 'POST',
+    content_type ENUM('json', 'form', 'xml') DEFAULT 'json',
+    active BOOLEAN DEFAULT TRUE,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS callback_logs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    callback_id INT NOT NULL,
+    request_data JSON,
+    response_data JSON,
+    http_code INT,
+    success BOOLEAN DEFAULT FALSE,
+    error_message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_callback_id (callback_id),
+    INDEX idx_created_at (created_at),
+    FOREIGN KEY (callback_id) REFERENCES third_party_callbacks(id) ON DELETE CASCADE
+);
+
 -- Insert default settings
 INSERT INTO settings (setting_key, setting_value, setting_type) VALUES
 ('store_name', 'Haroon Jewellery', 'text'),
